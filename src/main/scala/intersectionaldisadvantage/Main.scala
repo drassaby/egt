@@ -9,8 +9,8 @@ object Main {
   val REPLICATION_EPSILON = 0.1
 
   val PAYOFFS = PayoffMatrix(Vector(
-    Vector((4, 4), (4, 6)),
-    Vector((6, 4), (0, 0)),
+    Vector((1, 1), (1, 9)),
+    Vector((9, 1), (0, 0)),
   ))
 
   val P1_PROPORTION = .8
@@ -72,7 +72,8 @@ object Main {
 
 
   def main(args: Array[String]): Unit = {
-
+    var p1q1InConvergences = Vector[Int]()
+    var p1q1OutConvergences = Vector[Int]()
 
     // Run the simulation RUNS times
     for (run <- 1 to RUNS) {
@@ -101,10 +102,15 @@ object Main {
 
       // Record the results from this run
       println(newPop)
+      val inStrat = newPop((P1, Q1)).in
+      p1q1InConvergences = p1q1InConvergences :+ inStrat.indexOf(inStrat.max)
+      val outStrat = newPop((P1, Q1)).out
+      p1q1OutConvergences = p1q1OutConvergences :+ outStrat.indexOf(outStrat.max)
     }
 
     // Print the results
-
+    println(p1q1InConvergences.groupBy(x=>x).mapValues(_.length))
+    println(p1q1OutConvergences.groupBy(x=>x).mapValues(_.length))
   }
 
   def replicate(payoffs: PayoffMatrix, population: Population): Population = {
@@ -165,7 +171,7 @@ object Main {
     * @return a vector with samples from a uniform distribution that sum to one.
     */
   def randFill(n: Int): Vector[Double] = {
-    // The negative logarithm is needed to ensure an unbaised distribution
+    // The negative logarithm is needed to ensure an unbiased distribution
     // Seems a bit strange if you don't know about random-point-picking
     // in Simplexes, but trust me...
     val y = Vector.fill(n)(-math.log(util.Random.nextDouble()))
@@ -200,11 +206,14 @@ case class PayoffMatrix(payoffs: Vector[Vector[(Int, Int)]]) {
 
       for (j <- payoffs.head.indices) {
         strategyPayoff +=
-          (player1(i) * player2(j) * payoffs(i)(j)._1 * p1prop
-            + player1(i) * player2(j) * payoffs(i)(j)._2 * p2prop)
+        // the proportion of the time that I play i against you playing j
+        // multiplied by the payoff for i against j
+        // multiplied by the proportion of the time we face off.
+          (player2(j) * payoffs(i)(j)._1 * p1prop
+            + player2(j) * payoffs(j)(i)._2 * p2prop)
       }
-      strategyPayoff
 
+      strategyPayoff
     }).toVector
   }
 }
