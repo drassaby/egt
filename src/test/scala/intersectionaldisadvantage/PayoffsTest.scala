@@ -11,13 +11,13 @@ class PayoffsTest extends WordSpec with Matchers {
         Vector((9, 1), (0, 0)),
       ))
 
-      val payoff = p.strategyPayoffs(Vector(.5, .5), .5, Vector(.5,.5), .5)
+      val payoff = p.twoPopulationStrategyPayoffs(Vector(.5, .5), .5, Vector(.5,.5), .5)
 
       payoff(0) shouldBe > (.99)
       payoff(0) shouldBe < (1.01)
 
       payoff(1) shouldBe > (4.4)
-      payoff(1) shouldBe < (5.6)
+      payoff(1) shouldBe < (4.6)
     }
   }
 

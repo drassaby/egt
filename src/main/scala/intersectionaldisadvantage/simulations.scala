@@ -47,7 +47,9 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
 
   private def fillStrategies(numStrategies: Int, thunk: Int => Vector[Double]): Map[(P, Q), Strategy] = {
     Vector((P1, Q1), (P2, Q1), (P1, Q2), (P2, Q2))
-      .map(_ -> Strategy(thunk(numStrategies), thunk(numStrategies)))
+      .map(_ -> Strategy(
+        ArenaStrategy(thunk(numStrategies), thunk(numStrategies)),
+        ArenaStrategy(thunk(numStrategies), thunk(numStrategies))))
       .toMap
   }
 
@@ -71,61 +73,137 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
     }
 
     oldPop.keys.forall(k =>
-      vectorStable(oldPop(k).in, newPop(k).in) && vectorStable(oldPop(k).out, newPop(k).out)
+      vectorStable(oldPop(k).p.in, newPop(k).p.in) &&
+        vectorStable(oldPop(k).p.out, newPop(k).p.out) &&
+        vectorStable(oldPop(k).q.in, newPop(k).q.in) &&
+        vectorStable(oldPop(k).q.out, newPop(k).q.out)
     )
   }
 
 }
 
-object ModerateIntersectionalitySimulation extends AbstractTwoArenaSimulation {
+object MinimalIntersectionalitySimulation extends AbstractTwoArenaSimulation {
   override protected def replicate(payoffs: PayoffMatrix, population: Population): Population = {
+    // TODO there should be some way to remove duplication between arenas
     population.map {
       case ((p: P, q: Q), strategy: Strategy) =>
-        // Update in-group strategy
-        val prop = p.proportion * q.proportion
-        val inGroupPayoffs =
-          payoffs.strategyPayoffs(strategy.in, prop, strategy.in, prop)
-        assert(inGroupPayoffs.length == payoffs.length)
+        
+        val pArenaStrategy = {
+          val pInGroupStrategy = strategy.p.in.map(_ * q.proportion)
+            .zip(population((p, q.opposite)).p.in.map(_ * q.opposite.proportion)).map {
+            case (s1,s2) => s1 + s2
+          }
 
-        val averageInGroupFitness = strategy.in.zip(inGroupPayoffs).map {
-          case (proportion, payoff) => proportion * payoff
-        }.sum
+          val pInGroupPayoffs =
+            payoffs.strategyPayoffs(pInGroupStrategy, p.proportion)
+          assert(pInGroupPayoffs.length == payoffs.length)
 
-        // compute the new proportions of each strategy
-        val newInGroupStrategy = strategy.in.zip(inGroupPayoffs).map {
-          case (proportion, payoff) =>
-            proportion * (payoff / averageInGroupFitness)
+          val averageInGroupFitness = strategy.p.in.zip(pInGroupPayoffs).map {
+            case (proportion, payoff) => proportion * payoff
+          }.sum
+
+          // compute the new proportions of each strategy
+          val newPInGroupStrategy = strategy.p.in.zip(pInGroupPayoffs).map {
+            case (proportion, payoff) =>
+              proportion * (payoff / averageInGroupFitness)
+          }
+
+          assert(math.abs(newPInGroupStrategy.sum - 1) < REPLICATION_EPSILON)
+
+
+          // Update out-group strategy
+          val outGroupPayoffs = {
+
+            val pOutGroupStrategy = strategy.p.out.map(_ * q.proportion)
+              .zip(population((p, q.opposite)).p.out.map(_ * q.opposite.proportion)).map {
+              case (s1,s2) => s1 + s2
+            }
+
+            // we have a vector of vectors of the proportion in each group of each strategy,
+            // take the row-wise sum
+            val pOppositeOutGroupStrategy = population((p.opposite, q)).p.out.map(_ * q.opposite.proportion)
+              .zip(population((p.opposite, q.opposite)).p.out.map(_ * q.opposite.proportion)).map {
+              case (s1,s2) => s1 + s2
+            }
+
+            payoffs.twoPopulationStrategyPayoffs(
+              pOutGroupStrategy, p.proportion,
+              pOppositeOutGroupStrategy, p.opposite.proportion)
+          }
+          assert(outGroupPayoffs.length == payoffs.length)
+
+          val averagePOutGroupFitness = strategy.p.out.zip(outGroupPayoffs).map {
+            case (proportion, payoff) => proportion * payoff
+          }.sum
+
+          // compute the new proportions of each strategy
+          val newPOutGroupStrategy = strategy.p.out.zip(outGroupPayoffs).map {
+            case (proportion, payoff) =>
+              proportion * (payoff / averagePOutGroupFitness)
+          }
+          assert(math.abs(newPOutGroupStrategy.sum - 1) < REPLICATION_EPSILON)
+
+          ArenaStrategy(newPInGroupStrategy, newPOutGroupStrategy)
         }
 
-        assert(math.abs(newInGroupStrategy.sum - 1) < REPLICATION_EPSILON)
+        val qArenaStrategy = {
+          val qInGroupStrategy = strategy.q.in.map(_ * p.proportion)
+            .zip(population((p.opposite, q)).q.in.map(_ * p.opposite.proportion)).map {
+            case (s1,s2) => s1 + s2
+          }
+
+          val qInGroupPayoffs =
+            payoffs.strategyPayoffs(qInGroupStrategy, q.proportion)
+          assert(qInGroupPayoffs.length == payoffs.length)
+
+          val averageQInGroupFitness = strategy.q.in.zip(qInGroupPayoffs).map {
+            case (proportion, payoff) => proportion * payoff
+          }.sum
+
+          // compute the new proportions of each strategy
+          val newQInGroupStrategy = strategy.q.in.zip(qInGroupPayoffs).map {
+            case (proportion, payoff) =>
+              proportion * (payoff / averageQInGroupFitness)
+          }
+
+          assert(math.abs(newQInGroupStrategy.sum - 1) < REPLICATION_EPSILON)
 
 
-        // Update out-group strategy
-        val outGroupPayoffs = {
-          // we have a vector of vectors of the proportion in each group of each strategy,
-          // take the row-wise sum
-          val outGroupStrategyProportions = (population - ((p, q)))
-            .map {
-              case ((otherP, otherQ), otherStrategy) =>
-                otherStrategy.out.map(_ * otherP.proportion * otherQ.proportion)
-            }.transpose.map(_.sum).toVector
+          // Update out-group strategy
+          val outGroupPayoffs = {
+              val qOutGroupStrategy = strategy.q.out.map(_ * p.proportion)
+                .zip(population((p.opposite, q)).q.out.map(_ * p.opposite.proportion)).map {
+                case (s1,s2) => s1 + s2
+              }
 
-          payoffs.strategyPayoffs(strategy.out, prop, outGroupStrategyProportions, 1 - prop)
+              // we have a vector of vectors of the proportion in each group of each strategy,
+              // take the row-wise sum
+              val qOppositeOutGroupStrategy = population((p, q.opposite)).q.out.map(_ * p.opposite.proportion)
+                .zip(population((p.opposite, q.opposite)).p.out.map(_ * q.opposite.proportion)).map {
+                case (s1,s2) => s1 + s2
+              }
+
+              payoffs.twoPopulationStrategyPayoffs(
+                qOutGroupStrategy, p.proportion,
+                qOppositeOutGroupStrategy, p.opposite.proportion)
+            }
+          assert(outGroupPayoffs.length == payoffs.length)
+
+          val averageQOutGroupFitness = strategy.q.out.zip(outGroupPayoffs).map {
+            case (proportion, payoff) => proportion * payoff
+          }.sum
+
+          // compute the new proportions of each strategy
+          val newQOutGroupStrategy = strategy.q.out.zip(outGroupPayoffs).map {
+            case (proportion, payoff) =>
+              proportion * (payoff / averageQOutGroupFitness)
+          }
+          assert(math.abs(newQOutGroupStrategy.sum - 1) < REPLICATION_EPSILON)
+
+          ArenaStrategy(newQInGroupStrategy, newQOutGroupStrategy)
         }
-        assert(outGroupPayoffs.length == payoffs.length)
-
-        val averageOutGroupFitness = strategy.out.zip(outGroupPayoffs).map {
-          case (proportion, payoff) => proportion * payoff
-        }.sum
-
-        // compute the new proportions of each strategy
-        val newOutGroupStrategy = strategy.out.zip(outGroupPayoffs).map {
-          case (proportion, payoff) =>
-            proportion * (payoff / averageOutGroupFitness)
-        }
-        assert(math.abs(newOutGroupStrategy.sum - 1) < REPLICATION_EPSILON)
-
-        (p, q) -> Strategy(newInGroupStrategy, newOutGroupStrategy)
+        
+        (p, q) -> Strategy(pArenaStrategy,qArenaStrategy) 
     }
   }
 }

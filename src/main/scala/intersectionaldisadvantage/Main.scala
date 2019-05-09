@@ -13,28 +13,32 @@ object Main {
   // assumes a game where both players have the same strategy set
   val NUM_STRATEGIES: Int = PAYOFFS.length
 
-  val P1_PROPORTION, Q1_PROPORTION = .9
+  val P1_PROPORTION, Q1_PROPORTION = .8
 
   def main(args: Array[String]): Unit = {
-    val outcome = ModerateIntersectionalitySimulation(
+    val outcome = MinimalIntersectionalitySimulation(
       PAYOFFS,
       runs=RUNS,
       maxGenerations=MAX_GENERATIONS)
 
-    var mostFrequentOut = Map[(P, Q), Vector[Int]]()
+    var mostFrequentPOut = Map[(P, Q), Vector[Int]]()
+    var mostFrequentQOut = Map[(P, Q), Vector[Int]]()
 
 
       // Record the results from this run
       outcome.foreach {
         _.foreach {
         case ((p: P, q: Q), strategy: Strategy) =>
-          val newOut = mostFrequentOut.getOrElse((p, q), Vector()) :+ strategy.out.indexOf(strategy.out.max)
-          mostFrequentOut = mostFrequentOut.updated((p, q), newOut)
+          val newPOut = mostFrequentPOut.getOrElse((p, q), Vector()) :+ strategy.p.out.indexOf(strategy.p.out.max)
+          mostFrequentPOut = mostFrequentPOut.updated((p, q), newPOut)
+          val newQOut = mostFrequentPOut.getOrElse((p, q), Vector()) :+ strategy.q.out.indexOf(strategy.q.out.max)
+          mostFrequentQOut = mostFrequentQOut.updated((p, q), newQOut)
       }
     }
 
     // Print the results
-    println(mostFrequentOut.mapValues(_.groupBy(x => x).mapValues(_.length)))
+    println(mostFrequentPOut.mapValues(_.groupBy(x => x).mapValues(_.length)))
+    println(mostFrequentQOut.mapValues(_.groupBy(x => x).mapValues(_.length)))
   }
 
 }
@@ -46,7 +50,11 @@ case class PayoffMatrix(payoffs: Vector[Vector[(Int, Int)]]) {
 
   def length: Int = payoffs.length
 
-  def strategyPayoffs(player1: Vector[Double], p1prop: Double,
+
+  def strategyPayoffs(player1: Vector[Double], p1prop: Double) = {
+    twoPopulationStrategyPayoffs(player1, p1prop, player1, p1prop)
+  }
+  def twoPopulationStrategyPayoffs(player1: Vector[Double], p1prop: Double,
                       player2: Vector[Double], p2prop: Double
                      ): Vector[Double] = {
     (for (i <- payoffs.indices) yield {
