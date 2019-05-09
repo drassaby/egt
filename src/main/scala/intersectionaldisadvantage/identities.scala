@@ -3,8 +3,10 @@ package intersectionaldisadvantage
 import intersectionaldisadvantage.Main.P1_PROPORTION
 import intersectionaldisadvantage.Main.Q1_PROPORTION
 
-trait IdentityComponent {
+sealed trait IdentityComponent {
   def proportion: Double
+
+  def opposite: IdentityComponent
 }
 
 // represents the two components of an identity
@@ -21,7 +23,7 @@ object P1 extends P {
 }
 
 object P2 extends P {
-  val proportion: Double = 1 - Q1.proportion
+  val proportion: Double = 1 - P1.proportion
 
   override def toString: String = "P2"
   def opposite: P = P1

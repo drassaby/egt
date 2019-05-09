@@ -3,7 +3,7 @@ package intersectionaldisadvantage
 
 object Main {
   val RUNS = 1000
-  val MAX_GENERATIONS = 10000
+  val MAX_GENERATIONS = 1000
 
   val PAYOFFS = PayoffMatrix(Vector(
     Vector((4, 4), (6, 4)),
@@ -18,27 +18,46 @@ object Main {
   def main(args: Array[String]): Unit = {
     val outcome = MinimalIntersectionalitySimulation(
       PAYOFFS,
-      runs=RUNS,
-      maxGenerations=MAX_GENERATIONS)
+      runs = RUNS,
+      maxGenerations = MAX_GENERATIONS)
 
-    var mostFrequentPOut = Map[(P, Q), Vector[Int]]()
-    var mostFrequentQOut = Map[(P, Q), Vector[Int]]()
+    var pqHighFrequencies = Vector[(P, Q)]()
 
+//    println(outcome)
+    // Record the results from this run
+    outcome.foreach {
+      population => {
+        println(population)
+        val pHigh = if (population(P1, Q1).p.out.indexOf(population(P1, Q1).p.out.max) == 1) {
+          P1
+        } else {
+          P2
+        }
 
-      // Record the results from this run
-      outcome.foreach {
-        _.foreach {
-        case ((p: P, q: Q), strategy: Strategy) =>
-          val newPOut = mostFrequentPOut.getOrElse((p, q), Vector()) :+ strategy.p.out.indexOf(strategy.p.out.max)
-          mostFrequentPOut = mostFrequentPOut.updated((p, q), newPOut)
-          val newQOut = mostFrequentPOut.getOrElse((p, q), Vector()) :+ strategy.q.out.indexOf(strategy.q.out.max)
-          mostFrequentQOut = mostFrequentQOut.updated((p, q), newQOut)
+        val qHigh = if (population(P1, Q1).q.out.indexOf(population(P1, Q1).q.out.max) == 1) {
+          Q1
+        } else {
+          Q2
+        }
+        println(pHigh, qHigh)
+        pqHighFrequencies = pqHighFrequencies :+ (pHigh, qHigh)
+
       }
+
+      //        _.foreach {
+      //
+      //        case ((p: P, q: Q), strategy: Strategy) =>
+      //          pqHighFrequencies = pqHighFrequencies :+ (
+      //            strategy.p.out.indexOf(strategy.p.out.max),
+      //          strategy.q.out.indexOf(strategy.q.out.max))
+      //      }
     }
 
     // Print the results
-    println(mostFrequentPOut.mapValues(_.groupBy(x => x).mapValues(_.length)))
-    println(mostFrequentQOut.mapValues(_.groupBy(x => x).mapValues(_.length)))
+    //    println(mostFrequentPOut.mapValues(_.groupBy(x => x).mapValues(_.length)))
+    //    println(mostFrequentQOut.mapValues(_.groupBy(x => x).mapValues(_.length)))
+    println(pqHighFrequencies.groupBy(x => x).mapValues(_.length))
+
   }
 
 }
@@ -51,12 +70,13 @@ case class PayoffMatrix(payoffs: Vector[Vector[(Int, Int)]]) {
   def length: Int = payoffs.length
 
 
-  def strategyPayoffs(player1: Vector[Double], p1prop: Double) = {
+  def strategyPayoffs(player1: Vector[Double], p1prop: Double): Vector[Double] = {
     twoPopulationStrategyPayoffs(player1, p1prop, player1, p1prop)
   }
+
   def twoPopulationStrategyPayoffs(player1: Vector[Double], p1prop: Double,
-                      player2: Vector[Double], p2prop: Double
-                     ): Vector[Double] = {
+                                   player2: Vector[Double], p2prop: Double
+                                  ): Vector[Double] = {
     (for (i <- payoffs.indices) yield {
       var strategyPayoff = 0d
 
