@@ -13,7 +13,7 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
   val REPLICATION_EPSILON = 0.001
 
   // how close does each corresponding element in two populations have to be for it to be stable
-  val STABILITY_EPSILON = 0.0001
+  val STABILITY_EPSILON = 0.001
 
 
   override def apply(payoffs: PayoffMatrix, runs: Int, maxGenerations: Int)
@@ -83,7 +83,6 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
 
 object MinimalIntersectionalitySimulation extends AbstractTwoArenaSimulation {
   override protected def replicate(payoffs: PayoffMatrix, population: Population): Population = {
-    // TODO there should be some way to remove duplication between arenas
     def runArena(salientIdentity: IdentityComponent,
                  secondaryIdentity: IdentityComponent,
                  retrieveStrategy: Strategy => ArenaStrategy)
@@ -99,26 +98,23 @@ object MinimalIntersectionalitySimulation extends AbstractTwoArenaSimulation {
         retrieveStrategy(population((p, q)))
       }
 
+
       val newInGroupStrategy: Vector[Double] = {
         val strategy: ArenaStrategy = getStrategy(salientIdentity, secondaryIdentity)
 
-        val inGroupStrategy = strategy.in.map(_ * salientIdentity.proportion)
-          .zip(getStrategy(salientIdentity, secondaryIdentity.opposite).in
-            .map(_ * salientIdentity.opposite.proportion))
-          .map {
-            case (s1, s2) => s1 + s2
-          }
+        val inGroupStrategy = Utils.weightedSum(
+          strategy.in, secondaryIdentity.proportion,
+          getStrategy(salientIdentity, secondaryIdentity.opposite).in,
+          secondaryIdentity.opposite.proportion)
 
         val inGroupPayoffs: Vector[Double] =
           payoffs.strategyPayoffs(inGroupStrategy, salientIdentity.proportion)
         assert(inGroupPayoffs.length == payoffs.length)
 
-        val averageInGroupFitness: Double = strategy.in.zip(inGroupPayoffs).map {
-          case (proportion, payoff) => proportion * payoff
-        }.sum
+        val averageInGroupFitness: Double = Utils.dotProduct(inGroupStrategy, inGroupPayoffs)
 
         // compute the new proportions of each strategy
-        strategy.in.zip(inGroupPayoffs).map {
+        inGroupStrategy.zip(inGroupPayoffs).map {
           case (proportion, payoff) =>
             proportion * (payoff / averageInGroupFitness)
         }
@@ -130,23 +126,19 @@ object MinimalIntersectionalitySimulation extends AbstractTwoArenaSimulation {
         val strategy = getStrategy(salientIdentity, secondaryIdentity).out
 
         // the strategy played by your salient identity against out-groups by that identity
-        // is the weighted elementwise of two vectors of the groups in your in-group
-        val outGroupStrategy = strategy.map(_ * secondaryIdentity.proportion)
-          .zip(getStrategy(salientIdentity, secondaryIdentity.opposite).out
-            .map(_ * secondaryIdentity.opposite.proportion)).map {
-          case (s1, s2) => s1 + s2
-        }
+        // is the weighted elementwise sum of two vectors of the groups in your in-group
+        val outGroupStrategy = Utils.weightedSum(
+          strategy, secondaryIdentity.proportion,
+          getStrategy(salientIdentity, secondaryIdentity.opposite).out,
+          secondaryIdentity.opposite.proportion)
 
         // the strategy played against your salient identity by out-groups of that identity
         // we have a vector of vectors of the proportion in each group of each strategy,
         // take the row-wise sum
-        val oppositeOutGroupStrategy =
-        getStrategy(salientIdentity.opposite, secondaryIdentity).out
-          .map(_ * secondaryIdentity.proportion)
-          .zip(getStrategy(salientIdentity.opposite, secondaryIdentity.opposite).out
-            .map(_ * secondaryIdentity.opposite.proportion)).map {
-          case (s1, s2) => s1 + s2
-        }
+        val oppositeOutGroupStrategy = Utils.weightedSum(
+          getStrategy(salientIdentity.opposite, secondaryIdentity).out, secondaryIdentity.proportion,
+          getStrategy(salientIdentity.opposite, secondaryIdentity.opposite).out,
+          secondaryIdentity.opposite.proportion)
 
         val outGroupPayoffs = payoffs.twoPopulationStrategyPayoffs(
           outGroupStrategy, salientIdentity.proportion,
@@ -154,15 +146,14 @@ object MinimalIntersectionalitySimulation extends AbstractTwoArenaSimulation {
 
         assert(outGroupPayoffs.length == payoffs.length)
 
-        val averageOutGroupFitness = strategy.zip(outGroupPayoffs).map {
-          case (proportion, payoff) => proportion * payoff
-        }.sum
+        val payoffAverage = Utils.dotProduct(outGroupStrategy, outGroupPayoffs)
 
-        strategy.zip(outGroupPayoffs).map {
+        outGroupStrategy.zip(outGroupPayoffs).map {
           case (proportion, payoff) =>
-            proportion * (payoff / averageOutGroupFitness)
+            proportion * (payoff / payoffAverage)
         }
       }
+
       assert(math.abs(newOutGroupStrategy.sum - 1) < REPLICATION_EPSILON)
 
       ArenaStrategy(newInGroupStrategy, newOutGroupStrategy)
