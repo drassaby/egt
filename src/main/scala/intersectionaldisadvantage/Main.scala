@@ -2,7 +2,7 @@ package intersectionaldisadvantage
 
 
 object Main {
-  val RUNS = 1000
+  val RUNS = 100
   val MAX_GENERATIONS = 1000
 
   val PAYOFFS = PayoffMatrix(Vector(

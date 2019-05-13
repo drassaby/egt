@@ -13,7 +13,7 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
   val REPLICATION_EPSILON = 0.001
 
   // how close does each corresponding element in two populations have to be for it to be stable
-  val STABILITY_EPSILON = 0.001
+  val STABILITY_EPSILON = 0.0001
 
 
   override def apply(payoffs: PayoffMatrix, runs: Int, maxGenerations: Int)
@@ -36,6 +36,10 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
         oldPop = newPop
         newPop = replicate(payoffs, oldPop)
       }
+      if (generation >= maxGenerations - 1) {
+        println("Hit generation cap")
+      }
+
       strategiesAtTermination += newPop
     }
 
@@ -99,61 +103,64 @@ object MinimalIntersectionalitySimulation extends AbstractTwoArenaSimulation {
       }
 
 
-      val newInGroupStrategy: Vector[Double] = {
-        val strategy: ArenaStrategy = getStrategy(salientIdentity, secondaryIdentity)
+      val strategy: ArenaStrategy = getStrategy(salientIdentity, secondaryIdentity)
 
-        val inGroupStrategy = Utils.weightedSum(
-          strategy.in, secondaryIdentity.proportion,
-          getStrategy(salientIdentity, secondaryIdentity.opposite).in,
-          secondaryIdentity.opposite.proportion)
+      val inGroupStrategy = Utils.weightedSum(
+        strategy.in, secondaryIdentity.proportion,
+        getStrategy(salientIdentity, secondaryIdentity.opposite).in,
+        secondaryIdentity.opposite.proportion)
 
-        val inGroupPayoffs: Vector[Double] =
-          payoffs.strategyPayoffs(inGroupStrategy, salientIdentity.proportion)
-        assert(inGroupPayoffs.length == payoffs.length)
+      val inGroupPayoffs: Vector[Double] =
+        payoffs.strategyPayoffs(inGroupStrategy, salientIdentity.proportion)
+      assert(inGroupPayoffs.length == payoffs.length)
 
-        val averageInGroupFitness: Double = Utils.dotProduct(inGroupStrategy, inGroupPayoffs)
+      // the strategy played by your salient identity against out-groups by that identity
+      // is the weighted elementwise sum of two vectors of the groups in your in-group
+      val outGroupStrategy = Utils.weightedSum(
+        getStrategy(salientIdentity, secondaryIdentity).out,
+        secondaryIdentity.proportion,
+        getStrategy(salientIdentity, secondaryIdentity.opposite).out,
+        secondaryIdentity.opposite.proportion)
 
-        // compute the new proportions of each strategy
-        inGroupStrategy.zip(inGroupPayoffs).map {
-          case (proportion, payoff) =>
-            proportion * (payoff / averageInGroupFitness)
-        }
+      // the strategy played against your salient identity by out-groups of that identity
+      // we have a vector of vectors of the proportion in each group of each strategy,
+      // take the row-wise sum
+      val oppositeOutGroupStrategy = Utils.weightedSum(
+        getStrategy(salientIdentity.opposite, secondaryIdentity).out, secondaryIdentity.proportion,
+        getStrategy(salientIdentity.opposite, secondaryIdentity.opposite).out,
+        secondaryIdentity.opposite.proportion)
+
+      val outGroupPayoffs = payoffs.twoPopulationStrategyPayoffs(
+        outGroupStrategy, salientIdentity.proportion,
+        oppositeOutGroupStrategy, salientIdentity.opposite.proportion)
+
+      assert(outGroupPayoffs.length == payoffs.length)
+
+      val averageOutGroupFitness = Utils.dotProduct(outGroupStrategy, outGroupPayoffs)
+
+      /**
+        * Indexed by (in group strategy)(out group strategy) leads to the fitness for playing
+        * that in and out group strategy.
+        */
+      val jointFitness: Vector[Vector[Double]] = inGroupPayoffs.map(igp =>
+        outGroupPayoffs.map(igp * salientIdentity.proportion +
+          _ * salientIdentity.opposite.proportion))
+
+
+      // compute the new proportions of each strategy
+      val newInGroupStrategy: Vector[Double] = inGroupStrategy
+        .zip(jointFitness.map(_.sum)).map {
+        case (proportion, payoff) =>
+          proportion * (payoff / Utils.dotProduct(inGroupStrategy,jointFitness.map(_.sum)))
       }
+
+      val newOutGroupStrategy: Vector[Double] = outGroupStrategy
+        .zip(jointFitness.transpose.map(_.sum)).map {
+        case (proportion, payoff) =>
+          proportion * (payoff / Utils.dotProduct(outGroupStrategy,jointFitness.transpose.map(_.sum)))
+      }
+
       assert(math.abs(newInGroupStrategy.sum - 1) < REPLICATION_EPSILON)
-
-      val newOutGroupStrategy: Vector[Double] = {
-
-        val strategy = getStrategy(salientIdentity, secondaryIdentity).out
-
-        // the strategy played by your salient identity against out-groups by that identity
-        // is the weighted elementwise sum of two vectors of the groups in your in-group
-        val outGroupStrategy = Utils.weightedSum(
-          strategy, secondaryIdentity.proportion,
-          getStrategy(salientIdentity, secondaryIdentity.opposite).out,
-          secondaryIdentity.opposite.proportion)
-
-        // the strategy played against your salient identity by out-groups of that identity
-        // we have a vector of vectors of the proportion in each group of each strategy,
-        // take the row-wise sum
-        val oppositeOutGroupStrategy = Utils.weightedSum(
-          getStrategy(salientIdentity.opposite, secondaryIdentity).out, secondaryIdentity.proportion,
-          getStrategy(salientIdentity.opposite, secondaryIdentity.opposite).out,
-          secondaryIdentity.opposite.proportion)
-
-        val outGroupPayoffs = payoffs.twoPopulationStrategyPayoffs(
-          outGroupStrategy, salientIdentity.proportion,
-          oppositeOutGroupStrategy, salientIdentity.opposite.proportion)
-
-        assert(outGroupPayoffs.length == payoffs.length)
-
-        val payoffAverage = Utils.dotProduct(outGroupStrategy, outGroupPayoffs)
-
-        outGroupStrategy.zip(outGroupPayoffs).map {
-          case (proportion, payoff) =>
-            proportion * (payoff / payoffAverage)
-        }
-      }
-
       assert(math.abs(newOutGroupStrategy.sum - 1) < REPLICATION_EPSILON)
 
       ArenaStrategy(newInGroupStrategy, newOutGroupStrategy)
