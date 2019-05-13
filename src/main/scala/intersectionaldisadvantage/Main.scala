@@ -2,8 +2,8 @@ package intersectionaldisadvantage
 
 
 object Main {
-  val RUNS = 100
-  val MAX_GENERATIONS = 1000
+  val RUNS = 200
+  val MAX_GENERATIONS = 2000
 
   val PAYOFFS = PayoffMatrix(Vector(
     Vector((4, 4), (4, 6)),
@@ -13,7 +13,7 @@ object Main {
   val P1_PROPORTION, Q1_PROPORTION = .9
 
   def main(args: Array[String]): Unit = {
-    val outcome = MinimalIntersectionalitySimulation(
+    val outcome = ModerateIntersectionalitySimulation(
       PAYOFFS,
       runs = RUNS,
       maxGenerations = MAX_GENERATIONS)
@@ -24,14 +24,17 @@ object Main {
     // Record the results from this run
     outcome.foreach {
       population => {
+        def maxIndex(vector: Vector[Double]) = {
+          vector.indexOf(vector.max)
+        }
         println(population)
-        val pHigh = if (population(P1, Q1).p.out.indexOf(population(P1, Q1).p.out.max) == 1) {
+        val pHigh = if (maxIndex(population(P1, Q1).p.out) == PAYOFFS.length - 1) {
           P1
         } else {
           P2
         }
 
-        val qHigh = if (population(P1, Q1).q.out.indexOf(population(P1, Q1).q.out.max) == 1) {
+        val qHigh = if (maxIndex(population(P1, Q1).q.out) == PAYOFFS.length - 1) {
           Q1
         } else {
           Q2

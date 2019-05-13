@@ -9,7 +9,7 @@ case class PayoffMatrix(payoffs: Vector[Vector[(Int, Int)]]) {
 
 
   def strategyPayoffs(player1: Vector[Double], p1prop: Double): Vector[Double] = {
-    twoPopulationStrategyPayoffs(player1, p1prop / 2, player1, p1prop / 2)
+    twoPopulationStrategyPayoffs(player1, p1prop, player1, p1prop)
   }
 
   /**
