@@ -2,9 +2,9 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 
-csv_filename = "./456.csv"
+csv_filename = "./1-9.csv"
 title = "Proportion of (P1, Q1) playing strategies in P and Q arenas"
-labels = ["4", "5", "6"]
+labels = [str(x) for x in range(1,10)]
 
 
 with open(csv_filename) as csv_fd:

@@ -25,8 +25,8 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
 
     // Run the simulation RUNS times
     for (run <- 1 to runs) {
-      if (runs % 100 == 0) {
-        println(f"Ran ${runs} runs")
+      if (run % 100 == 0) {
+        println(f"Ran ${run} runs")
       }
       var oldPop: Population = fillStrategies(numStrategies, Vector.fill(_)(0d))
 

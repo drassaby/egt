@@ -5,7 +5,7 @@ object Main {
   val RUNS = 10 * 1000
   val MAX_GENERATIONS = 2000
 
-  val strategies = 4 to 6 toVector
+  val strategies = 2 to 8 toVector
 
   val PAYOFFS = PayoffMatrix(strategies.map(s1 =>
     strategies.map(s2 => if (s1 + s2 <= 10) {
