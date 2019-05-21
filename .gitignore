@@ -1,4 +1,5 @@
 papers/
+venv
 
 # Created by https://www.gitignore.io/api/sbt,macos,scala,intellij
 # Edit at https://www.gitignore.io/?templates=sbt,macos,scala,intellij
