@@ -36,7 +36,7 @@ case class PayoffMatrix(payoffs: Vector[Vector[(Int, Int)]]) {
           // multiplied by the payoff for i against j
           // multiplied by the proportion of the time we face off.
           (player2(j) * payoffs(i)(j)._1 * p1prop
-            + player2(j) * payoffs(j)(i)._2 * p2prop)
+            + player2(j) * payoffs(i)(j)._1 * p2prop)
       }
       strategyPayoff
     }).toVector

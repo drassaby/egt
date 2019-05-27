@@ -11,8 +11,8 @@ package object intersectionaldisadvantage {
 
   case class ArenaStrategy(in: Vector[Double], out: Vector[Double]) {
     // every strategy has to be represented in the in- and out- group strategy ratio vectors
-    assert(in.length == PAYOFFS.length)
-    assert(out.length == PAYOFFS.length)
+//    assert(in.length == PAYOFFS.length)
+//    assert(out.length == PAYOFFS.length)
 
     override def toString(): String = {
       f"""
@@ -22,4 +22,15 @@ package object intersectionaldisadvantage {
     }
   }
 
+  sealed trait Arena {
+    def strategy(strategy: Strategy): ArenaStrategy
+  }
+
+  case object PArena extends Arena {
+    override def strategy(strategy: Strategy): ArenaStrategy = strategy.p
+  }
+
+  case object QArena extends Arena {
+    override def strategy(strategy: Strategy): ArenaStrategy = strategy.q
+  }
 }

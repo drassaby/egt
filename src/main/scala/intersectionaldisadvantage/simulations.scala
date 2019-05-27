@@ -2,8 +2,8 @@ package intersectionaldisadvantage
 
 import scala.collection.mutable
 
-trait TwoArenaSimulation extends ((PayoffMatrix, Int, Int) => Vector[Population]) {
-  override def apply(payoffs: PayoffMatrix, runs: Int, maxGenerations: Int)
+trait TwoArenaSimulation extends ((Map[(Arena, P), PayoffMatrix], Int, Int) => Vector[Population]) {
+  override def apply(payoffs: Map[(Arena, P), PayoffMatrix], runs: Int, maxGenerations: Int)
   : Vector[Map[(P, Q), Strategy]]
 }
 
@@ -16,12 +16,12 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
   val STABILITY_EPSILON = 0.0001
 
 
-  override def apply(payoffs: PayoffMatrix, runs: Int, maxGenerations: Int)
+  override def apply(payoffs: Map[(Arena, P), PayoffMatrix], runs: Int, maxGenerations: Int)
   : Vector[Map[(P, Q), Strategy]] = {
     val strategiesAtTermination = mutable.ArrayBuffer[Population]()
 
     // assumes a game where both players have the same strategy set
-    val numStrategies: Int = payoffs.length
+    val numStrategies: Int = payoffs.toVector.head._2.length
 
     // Run the simulation RUNS times
     for (run <- 1 to runs) {
@@ -85,41 +85,46 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
     )
   }
 
-
-  def makeStrategyRetriever(retrieveStrategy: Strategy => ArenaStrategy, population: Population)
-                           (i1: IdentityComponent, i2: IdentityComponent): ArenaStrategy = {
-    val (p, q) = (i1, i2) match {
+  def findPAndQ(i1: IdentityComponent, i2: IdentityComponent): (P, Q) = {
+    (i1, i2) match {
       case (p: P, q: Q) => (p, q)
       case (q: Q, p: P) => (p, q)
       case _ => throw new IllegalArgumentException()
     }
-
-    retrieveStrategy(population((p, q)))
   }
 
 
-  def replicate(payoffs: PayoffMatrix, population: Population): Population = {
+  def makeStrategyRetriever(arena: Arena, population: Population)
+                           (i1: IdentityComponent, i2: IdentityComponent): ArenaStrategy = {
+    val (p, q) = findPAndQ(i1, i2)
+    arena.strategy(population((p, q)))
+  }
+
+
+  def replicate(payoffs: Map[(Arena, P), PayoffMatrix], population: Population): Population = {
     population.map {
       case ((p: P, q: Q), strategy: Strategy) =>
         val arenaRunner = runArena(payoffs, population) _
-        (p, q) -> Strategy(arenaRunner(p, q, _.p), arenaRunner(q, p, _.q))
+        (p, q) -> Strategy(arenaRunner(p, q, PArena), arenaRunner(q, p, QArena))
     }
   }
 
-  def runArena(payoffs: PayoffMatrix, population: Population)
+  def runArena(payoffs: Map[(Arena, P), PayoffMatrix], population: Population)
               (salientIdentity: IdentityComponent,
                secondaryIdentity: IdentityComponent,
-               retrieveStrategy: Strategy => ArenaStrategy)
+               arena: Arena)
   : ArenaStrategy
 }
 
 object MinimalIntersectionalitySimulation extends AbstractTwoArenaSimulation {
-  def runArena(payoffs: PayoffMatrix, population: Population)
+  def runArena(payoffMap: Map[(Arena, P), PayoffMatrix], population: Population)
               (salientIdentity: IdentityComponent,
                secondaryIdentity: IdentityComponent,
-               retrieveStrategy: Strategy => ArenaStrategy)
+               arena: Arena)
   : ArenaStrategy = {
-    val getStrategy = makeStrategyRetriever(retrieveStrategy, population) _
+    val payoffs = payoffMap(arena, findPAndQ(salientIdentity, secondaryIdentity)._1)
+
+    val getStrategy = makeStrategyRetriever(arena, population) _
 
     val strategyIn: Vector[Double] = getStrategy(salientIdentity, secondaryIdentity).in
 
@@ -184,77 +189,78 @@ object MinimalIntersectionalitySimulation extends AbstractTwoArenaSimulation {
   }
 }
 
-object ModerateIntersectionalitySimulation extends AbstractTwoArenaSimulation {
-  override def runArena(payoffs: PayoffMatrix, population: Population)
-                       (salientIdentity: IdentityComponent,
-                        secondaryIdentity: IdentityComponent,
-                        retrieveStrategy: Strategy => ArenaStrategy)
-  : ArenaStrategy = {
-    val getStrategy = makeStrategyRetriever(retrieveStrategy, population) _
 
-    val strategyIn: Vector[Double] = getStrategy(salientIdentity, secondaryIdentity).in
-
-    val inGroupStrategy = Utils.weightedSum(
-      strategyIn, secondaryIdentity.proportion,
-      getStrategy(salientIdentity, secondaryIdentity.opposite).in,
-      secondaryIdentity.opposite.proportion)
-
-    val inGroupPayoffs: Vector[Double] =
-      payoffs.strategyPayoffs(inGroupStrategy, salientIdentity.proportion)
-    assert(inGroupPayoffs.length == payoffs.length)
-
-    val strategyOut: Vector[Double] = getStrategy(salientIdentity, secondaryIdentity).out
-    // the strategy played by your salient identity against out-groups by that identity
-    // is the weighted elementwise sum of two vectors of the groups in your in-group
-    val outGroupStrategy = Utils.weightedSum(
-      strategyOut,
-      secondaryIdentity.proportion,
-      getStrategy(salientIdentity, secondaryIdentity.opposite).out,
-      secondaryIdentity.opposite.proportion)
-
-    // the strategy played against your salient identity by out-groups of that identity
-    // we have a vector of vectors of the proportion in each group of each strategy,
-    // take the row-wise sum
-    val oppositeOutGroupStrategy = Utils.weightedSum(
-      getStrategy(salientIdentity.opposite, secondaryIdentity).out,
-      secondaryIdentity.proportion,
-      getStrategy(salientIdentity.opposite, secondaryIdentity.opposite).out,
-      secondaryIdentity.opposite.proportion)
-
-    val outGroupPayoffs = payoffs.twoPopulationStrategyPayoffs(
-      outGroupStrategy, salientIdentity.proportion,
-      oppositeOutGroupStrategy, salientIdentity.opposite.proportion)
-
-    assert(outGroupPayoffs.length == payoffs.length)
-    /**
-      * Indexed by (in group strategy)(out group strategy) leads to the fitness for playing
-      * that in and out group strategy.
-      */
-    val jointFitness: Vector[Vector[Double]] = inGroupPayoffs.map(igp =>
-      outGroupPayoffs.map(igp * salientIdentity.proportion +
-        _ * salientIdentity.opposite.proportion))
-
-    // compute the new proportions of each strategy
-    val newInGroupStrategy: Vector[Double] = strategyIn
-      .zip(jointFitness.map(_.sum)).map {
-      case (proportion, payoff) =>
-        proportion * (payoff / Utils.dotProduct(
-          strategyIn,
-          jointFitness.map(_.sum)))
-    }
-
-    val newOutGroupStrategy: Vector[Double] = strategyOut
-      .zip(jointFitness.transpose.map(_.sum)).map {
-      case (proportion, payoff) =>
-        proportion * (payoff / Utils.dotProduct(
-          strategyOut,
-          jointFitness.transpose.map(_.sum)))
-    }
-
-    assert(math.abs(newInGroupStrategy.sum - 1) < REPLICATION_EPSILON)
-    assert(math.abs(newOutGroupStrategy.sum - 1) < REPLICATION_EPSILON)
-
-    ArenaStrategy(newInGroupStrategy, newOutGroupStrategy)
-  }
+//object ModerateIntersectionalitySimulation extends AbstractTwoArenaSimulation {
+//  override def runArena(payoffs: PayoffMatrix, population: Population)
+//                       (salientIdentity: IdentityComponent,
+//                        secondaryIdentity: IdentityComponent,
+//                        retrieveStrategy: Strategy => ArenaStrategy)
+//  : ArenaStrategy = {
+//    val getStrategy = makeStrategyRetriever(retrieveStrategy, population) _
+//
+//    val strategyIn: Vector[Double] = getStrategy(salientIdentity, secondaryIdentity).in
+//
+//    val inGroupStrategy = Utils.weightedSum(
+//      strategyIn,
+//      secondaryIdentity.proportion,
+//      getStrategy(salientIdentity, secondaryIdentity.opposite).in,
+//      secondaryIdentity.opposite.proportion)
+//
+//    val inGroupPayoffs: Vector[Double] =
+//      payoffs.strategyPayoffs(inGroupStrategy, salientIdentity.proportion)
+//    assert(inGroupPayoffs.length == payoffs.length)
+//
+//    val strategyOut: Vector[Double] = getStrategy(salientIdentity, secondaryIdentity).out
+//    // the strategy played by your salient identity against out-groups by that identity
+//    // is the weighted elementwise sum of two vectors of the groups in your in-group
+//    val outGroupStrategy = Utils.weightedSum(
+//      strategyOut,
+//      secondaryIdentity.proportion,
+//      getStrategy(salientIdentity, secondaryIdentity.opposite).out,
+//      secondaryIdentity.opposite.proportion)
+//
+//    // the strategy played against your salient identity by out-groups of that identity
+//    // we have a vector of vectors of the proportion in each group of each strategy,
+//    // take the row-wise sum
+//    val oppositeOutGroupStrategy = Utils.weightedSum(
+//      getStrategy(salientIdentity.opposite, secondaryIdentity).out,
+//      secondaryIdentity.proportion,
+//      getStrategy(salientIdentity.opposite, secondaryIdentity.opposite).out,
+//      secondaryIdentity.opposite.proportion)
+//
+//    val outGroupPayoffs = payoffs.twoPopulationStrategyPayoffs(
+//      outGroupStrategy, salientIdentity.proportion,
+//      oppositeOutGroupStrategy, salientIdentity.opposite.proportion)
+//
+//    assert(outGroupPayoffs.length == payoffs.length)
+//    /**
+//      * Indexed by (in group strategy)(out group strategy) leads to the fitness for playing
+//      * that in and out group strategy.
+//      */
+//    val jointFitness: Vector[Vector[Double]] = inGroupPayoffs.map(igp =>
+//      outGroupPayoffs.map(igp * salientIdentity.proportion * secondaryIdentity.proportion +
+//        _ * (1 - salientIdentity.proportion * secondaryIdentity.proportion)))
+//
+//    // compute the new proportions of each strategy
+//    val newInGroupStrategy: Vector[Double] = strategyIn
+//      .zip(jointFitness.map(_.sum)).map {
+//      case (proportion, payoff) =>
+//        proportion * (payoff / Utils.dotProduct(
+//          strategyIn,
+//          jointFitness.map(_.sum)))
+//    }
+//
+//    val newOutGroupStrategy: Vector[Double] = strategyOut
+//      .zip(jointFitness.transpose.map(_.sum)).map {
+//      case (proportion, payoff) =>
+//        proportion * (payoff / Utils.dotProduct(
+//          strategyOut,
+//          jointFitness.transpose.map(_.sum)))
+//    }
+//
+//    assert(math.abs(newInGroupStrategy.sum - 1) < REPLICATION_EPSILON)
+//    assert(math.abs(newOutGroupStrategy.sum - 1) < REPLICATION_EPSILON)
+//
+//    ArenaStrategy(newInGroupStrategy, newOutGroupStrategy)
 //  }
-}
+//}

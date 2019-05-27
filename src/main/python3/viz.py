@@ -2,10 +2,10 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 
-csv_filename = "./1-9.csv"
+csv_filename = "./1&9.csv"
 title = "Proportion of (P1, Q1) playing strategies in P and Q arenas"
-labels = [str(x) for x in range(1,10)]
-
+# labels = [str(x) for x in range(1,10)]
+labels = [1, 9]
 
 with open(csv_filename) as csv_fd:
     matrix = np.array([np.array([float(x) for x in row])

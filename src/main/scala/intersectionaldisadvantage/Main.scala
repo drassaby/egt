@@ -2,19 +2,49 @@ package intersectionaldisadvantage
 
 
 object Main {
-  val RUNS = 10 * 1000
+  val RUNS = 1000
   val MAX_GENERATIONS = 2000
 
-  val strategies = 2 to 8 toVector
+//  val strategies = 2 to 8 toVector
+  val strategies = Vector(4,6)
+  val D = 3
+  val P1_PROPORTION = .5
+  val Q1_PROPORTION = .8
 
-  val PAYOFFS = PayoffMatrix(strategies.map(s1 =>
+
+//  val PAYOFFS = PayoffMatrix(strategies.map(s1 =>
+//    strategies.map(s2 => if (s1 + s2 <= 10) {
+//      (s1, s2)
+//    } else {
+//      (0, 0)
+//    })))
+  val PAYOFFS: Map[(Arena, P), PayoffMatrix] = Map(
+  (PArena, P1) -> PayoffMatrix(strategies.map(s1 =>
+    strategies.map(s2 => if (s1 + s2 <= 10) {
+      (s1, s2)
+    } else {
+      (D, 0)
+    }))),
+  (PArena, P2) -> PayoffMatrix(strategies.map(s1 =>
+    strategies.map(s2 => if (s1 + s2 <= 10) {
+      (s1, s2)
+    } else {
+      (0, D)
+    }))),
+  (QArena, P1) -> PayoffMatrix(strategies.map(s1 =>
     strategies.map(s2 => if (s1 + s2 <= 10) {
       (s1, s2)
     } else {
       (0, 0)
-    })))
+    }))),
+  (QArena, P2) -> PayoffMatrix(strategies.map(s1 =>
+    strategies.map(s2 => if (s1 + s2 <= 10) {
+      (s1, s2)
+    } else {
+      (0, 0)
+    }))),
+  )
 
-  val P1_PROPORTION, Q1_PROPORTION = .9
 
   def main(args: Array[String]): Unit = {
     val outcome = MinimalIntersectionalitySimulation(
@@ -32,7 +62,7 @@ object Main {
           vector.indexOf(vector.max)
         }
 
-        println(population)
+        println(population.take(100))
         val pMax = maxIndex(population(P1, Q1).p.out)
 
         val qMax = maxIndex(population(P1, Q1).q.out)
