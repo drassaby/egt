@@ -1,4 +1,4 @@
-package intersectionaldisadvantage.minimal
+package intersectionaldisadvantage
 
 case class PayoffMatrix(payoffs: Vector[Vector[(Int, Int)]]) {
   // payoffs must be square and nonempty
@@ -40,4 +40,10 @@ case class PayoffMatrix(payoffs: Vector[Vector[(Int, Int)]]) {
       strategyPayoff
     }).toVector
   }
+}
+
+
+trait TwoArenaSimulation extends ((Map[(Arena, P), PayoffMatrix], Int, Int) => Vector[(Int, Int)]) {
+  override def apply(payoffs: Map[(Arena, P), PayoffMatrix], runs: Int, maxGenerations: Int)
+  : Vector[(Int, Int)]
 }

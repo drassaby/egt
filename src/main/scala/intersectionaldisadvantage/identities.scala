@@ -59,3 +59,4 @@ case object PArena extends Arena {
 case object QArena extends Arena {
   override def strategy(strategy: Strategy): ArenaStrategy = strategy.q
 }
+

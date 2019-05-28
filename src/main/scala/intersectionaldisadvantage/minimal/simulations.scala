@@ -5,22 +5,11 @@ import intersectionaldisadvantage.minimal.minimal.{ArenaStrategy, Population, St
 
 import scala.collection.mutable
 
-trait TwoArenaSimulation extends ((Map[(Arena, P), PayoffMatrix], Int, Int) => Vector[Population]) {
-  override def apply(payoffs: Map[(Arena, P), PayoffMatrix], runs: Int, maxGenerations: Int)
-  : Vector[Map[(P, Q), Strategy]]
-}
-
 
 abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
-  // how close each vector of strategy probablities has to be to 1
-  val REPLICATION_EPSILON = 0.001
-
-  // how close does each corresponding element in two populations have to be for it to be stable
-  val STABILITY_EPSILON = 0.0001
-
 
   override def apply(payoffs: Map[(Arena, P), PayoffMatrix], runs: Int, maxGenerations: Int)
-  : Vector[Map[(P, Q), Strategy]] = {
+  : Vector[(Int, Int)] = {
     val strategiesAtTermination = mutable.ArrayBuffer[Population]()
 
     // assumes a game where both players have the same strategy set
@@ -34,7 +23,7 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
       var oldPop: Population = fillStrategies(numStrategies, Vector.fill(_)(0d))
 
       // Initialize the strategy vectors randomly, for each identity
-      var newPop: Population = fillStrategies(numStrategies, randFill)
+      var newPop: Population = fillStrategies(numStrategies, Utils.randFill)
       var generation = 0
 
       while (!isStable(oldPop, newPop) && generation <= maxGenerations) {
@@ -49,7 +38,26 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
       strategiesAtTermination += newPop
     }
 
-    strategiesAtTermination.toVector
+    val outcome = strategiesAtTermination.toVector
+    var pqHighFrequencies = Vector[(Int, Int)]()
+
+    //    println(outcome)
+    // Record the results from this run
+    outcome.foreach {
+      population => {
+        def maxIndex(vector: Vector[Double]) = {
+          vector.indexOf(vector.max)
+        }
+
+        println(population.take(100))
+        val pMax = maxIndex(population(P1, Q1).p.out)
+
+        val qMax = maxIndex(population(P1, Q1).q.out)
+        pqHighFrequencies = pqHighFrequencies :+ (pMax, qMax)
+      }
+    }
+
+    pqHighFrequencies
   }
 
 
@@ -62,17 +70,6 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
   }
 
 
-  /**
-    * @param n the length of the vector
-    * @return a vector with samples from a uniform distribution that sum to one.
-    */
-  private def randFill(n: Int): Vector[Double] = {
-    // The negative logarithm is needed to ensure an unbiased distribution
-    // Seems a bit strange if you don't know about random-point-picking
-    // in Simplexes, but trust me...
-    val y = Vector.fill(n)(-math.log(util.Random.nextDouble()))
-    y.map(_ / y.sum)
-  }
 
 
   private def isStable(oldPop: Population, newPop: Population): Boolean = {

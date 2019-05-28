@@ -1,11 +1,14 @@
 package intersectionaldisadvantage
 
-import intersectionaldisadvantage.minimal.{MinimalIntersectionalitySimulation, PayoffMatrix}
+import intersectionaldisadvantage.minimal.MinimalIntersectionalitySimulation
 
 
 object Main {
   val RUNS = 1000
   val MAX_GENERATIONS = 2000
+
+  val simulation = MinimalIntersectionalitySimulation
+
 
 //  val strategies = 2 to 8 toVector
   val strategies = Vector(4,6)
@@ -49,29 +52,10 @@ object Main {
 
 
   def main(args: Array[String]): Unit = {
-    val outcome = MinimalIntersectionalitySimulation(
+    val pqHighFrequencies = simulation(
       PAYOFFS,
       runs = RUNS,
       maxGenerations = MAX_GENERATIONS)
-
-    var pqHighFrequencies = Vector[(Int, Int)]()
-
-    //    println(outcome)
-    // Record the results from this run
-    outcome.foreach {
-      population => {
-        def maxIndex(vector: Vector[Double]) = {
-          vector.indexOf(vector.max)
-        }
-
-        println(population.take(100))
-        val pMax = maxIndex(population(P1, Q1).p.out)
-
-        val qMax = maxIndex(population(P1, Q1).q.out)
-        pqHighFrequencies = pqHighFrequencies :+ (pMax, qMax)
-
-      }
-    }
 
     val indexMap = pqHighFrequencies.groupBy(x => x)
       .mapValues(_.length.toDouble / pqHighFrequencies.length)

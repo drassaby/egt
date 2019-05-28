@@ -1,6 +1,5 @@
 package intersectionaldisadvantage
 
-import intersectionaldisadvantage.minimal.PayoffMatrix
 import org.scalatest._
 
 class PayoffsTest extends WordSpec with Matchers {
