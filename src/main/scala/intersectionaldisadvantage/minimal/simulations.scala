@@ -128,7 +128,7 @@ object MinimalIntersectionalitySimulation extends AbstractTwoArenaSimulation {
 
     val strategyIn: Vector[Double] = getStrategy(salientIdentity, secondaryIdentity).in
 
-    val inGroupStrategy = Utils.weightedSum(
+    val inGroupStrategy = Utils.weightedElementwiseSum(
       strategyIn, secondaryIdentity.proportion,
       getStrategy(salientIdentity, secondaryIdentity.opposite).in,
       secondaryIdentity.opposite.proportion)
@@ -140,7 +140,7 @@ object MinimalIntersectionalitySimulation extends AbstractTwoArenaSimulation {
     val strategyOut: Vector[Double] = getStrategy(salientIdentity, secondaryIdentity).out
     // the strategy played by your salient identity against out-groups by that identity
     // is the weighted elementwise sum of two vectors of the groups in your in-group
-    val outGroupStrategy = Utils.weightedSum(
+    val outGroupStrategy = Utils.weightedElementwiseSum(
       strategyOut,
       secondaryIdentity.proportion,
       getStrategy(salientIdentity, secondaryIdentity.opposite).out,
@@ -149,7 +149,7 @@ object MinimalIntersectionalitySimulation extends AbstractTwoArenaSimulation {
     // the strategy played against your salient identity by out-groups of that identity
     // we have a vector of vectors of the proportion in each group of each strategy,
     // take the row-wise sum
-    val oppositeOutGroupStrategy = Utils.weightedSum(
+    val oppositeOutGroupStrategy = Utils.weightedElementwiseSum(
       getStrategy(salientIdentity.opposite, secondaryIdentity).out, secondaryIdentity.proportion,
       getStrategy(salientIdentity.opposite, secondaryIdentity.opposite).out,
       secondaryIdentity.opposite.proportion)

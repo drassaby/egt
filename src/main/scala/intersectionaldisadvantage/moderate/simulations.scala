@@ -2,6 +2,8 @@ package intersectionaldisadvantage.moderate
 
 import intersectionaldisadvantage._
 
+import scala.collection.mutable
+
 
 object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
 
@@ -36,7 +38,9 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
 
           val strategyProportions = newPop(p, q).proportions
 
-          val strategyPayoffs: Vector[Double] = strategies.map(getPayoff(p, q, payoffs, _, newPop))
+          val strategyPayoffs: Vector[Double] =
+            strategies.map(getPayoff(p, q, payoffs, _, newPop, strategies))
+
           val fitnesses = strategyPayoffs.map(_ / strategyPayoffs.sum)
 
           val newProportions = Utils.elementwiseProduct(strategyProportions, fitnesses)
@@ -50,20 +54,68 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
       }
 
       // then record the strategy p1, q1 converges to in P and Q arena
-      pqConvergence = pqConvergence :+ getConvergedStrategies(newPop)
+      pqConvergence = pqConvergence :+ getConvergedStrategies(newPop, strategies)
     }
 
     pqConvergence
   }
 
+  /**
+    *
+    * @param p
+    * @param q
+    * @param payoffs  the payoff matrix for each arena for each P type
+    * @param strategy the strategy to get the payoff for, when played by a (p, q) member
+    * @param pop      the population: everyone else
+    * @return
+    */
   def getPayoff(p: P, q: Q, payoffs: Map[(Arena, P), PayoffMatrix],
-                strategy: Strategy, newPop: Population): Double = {
+                strategy: Strategy, pop: Population, strategies: Vector[Strategy]): Double = {
+
+
     // P Arena
+    val pIn: Int = strategy.pIn
+    val pOut: Int = strategy.pOut
+    val ourPStrategy = Vector.tabulate(strategies.length)(x => if (x == pIn) 1 else 0)
+    val theirPStrategy: Vector[Double] = pop.foldLeft(Vector(0d, 0d)) {
+      case (soFar, ((stratP, stratQ), stratProps)) =>
+        if (stratP == p) {
+          soFar
+        } else {
+          val theirStrat = strategyFrequency(stratProps, strategies)(1)
+          Utils.weightedElementwiseSum(
+            soFar, 1, theirStrat, stratQ.proportion)
+        }
+    }
 
-    // Q Arena
-    
+    val pArenaInGroupPayoff: Double = payoffs(PArena, p)
+      .twoPopulationStrategyPayoffs(ourPStrategy, p.proportion).sum
+    val pArenaOutGroupPayoff: Double = payoffs(PArena, p).twoPopulationStrategyPayoffs(
+      ourPStrategy, p.proportion,
+      theirPStrategy, p.opposite.proportion).sum
 
-    // +
+
+    pArenaInGroupPayoff + pArenaOutGroupPayoff + qArenaInGroupPayoff + qArenaOutGroupPayoff
+  }
+
+  /**
+    *
+    * @param strategyProportions proportions that each strategy e.x. <1, 1, 0, 1> is played
+    * @return proportions of a strategy played in each arena, e.x. <<.4, .6>, <.1, .9>, …>
+    */
+  def strategyFrequency(strategyProportions: StrategyProportions, strategies: Vector[Strategy])
+  : Vector[Vector[Double]] = {
+    var frequencies = mutable.ArrayBuffer.fill(4)(mutable.ArrayBuffer.fill(strategies.length)(0d))
+
+    strategyProportions.proportions.zip(strategies).foreach {
+      case (prop, strat) =>
+        frequencies(0)(strat.pIn) += prop
+        frequencies(1)(strat.pOut) += prop
+        frequencies(2)(strat.qIn) += prop
+        frequencies(3)(strat.qOut) += prop
+    }
+
+    frequencies.map(_.toVector).toVector
   }
 
   def getConvergedStrategies(newPop: Population, strategies: Vector[Strategy]): (Int, Int) = {
@@ -74,8 +126,8 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
 
     strategyProportions.zip(strategies).foreach {
       case (prop, strat) =>
-        pConvergence = pConvergence.updated(strat(1), pConvergence.getOrElse(strat(1), 0d) + prop)
-        qConvergence = qConvergence.updated(strat(3), qConvergence.getOrElse(strat(3), 0d) + prop)
+        pConvergence = pConvergence.updated(strat.pOut, pConvergence.getOrElse(strat.pOut, 0d) + prop)
+        qConvergence = qConvergence.updated(strat.qOut, qConvergence.getOrElse(strat.qOut, 0d) + prop)
     }
 
     (pConvergence.toVector.maxBy(_._2)._1,

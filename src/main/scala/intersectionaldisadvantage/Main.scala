@@ -1,13 +1,14 @@
 package intersectionaldisadvantage
 
 import intersectionaldisadvantage.minimal.MinimalIntersectionalitySimulation
+import intersectionaldisadvantage.moderate.ModerateIntersectionalitySimulation
 
 
 object Main {
   val RUNS = 1000
   val MAX_GENERATIONS = 2000
 
-  val simulation = MinimalIntersectionalitySimulation
+  val simulation = ModerateIntersectionalitySimulation
 
 
 //  val strategies = 2 to 8 toVector

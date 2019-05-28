@@ -5,7 +5,7 @@ import org.scalatest.{Matchers, WordSpec}
 class TestUtils extends WordSpec with Matchers {
   "weightedSum" should {
     "work" in {
-      val ws = Utils.weightedSum(Vector(.1, .2), 2, Vector(.15, .35), 1)
+      val ws = Utils.weightedElementwiseSum(Vector(.1, .2), 2, Vector(.15, .35), 1)
 
       ws shouldBe Vector(.35, .75)
     }
