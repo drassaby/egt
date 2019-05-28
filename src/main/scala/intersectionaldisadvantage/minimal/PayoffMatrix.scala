@@ -1,5 +1,4 @@
-package intersectionaldisadvantage
-
+package intersectionaldisadvantage.minimal
 
 case class PayoffMatrix(payoffs: Vector[Vector[(Int, Int)]]) {
   // payoffs must be square and nonempty

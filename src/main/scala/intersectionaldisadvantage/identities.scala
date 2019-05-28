@@ -2,6 +2,7 @@ package intersectionaldisadvantage
 
 import intersectionaldisadvantage.Main.P1_PROPORTION
 import intersectionaldisadvantage.Main.Q1_PROPORTION
+import intersectionaldisadvantage.minimal.minimal.{ArenaStrategy, Strategy}
 
 sealed trait IdentityComponent {
   def proportion: Double
@@ -45,4 +46,16 @@ object Q2 extends Q {
 
   override def toString: String = "Q2"
   def opposite: Q = Q1
+}
+
+sealed trait Arena {
+  def strategy(strategy: Strategy): ArenaStrategy
+}
+
+case object PArena extends Arena {
+  override def strategy(strategy: Strategy): ArenaStrategy = strategy.p
+}
+
+case object QArena extends Arena {
+  override def strategy(strategy: Strategy): ArenaStrategy = strategy.q
 }

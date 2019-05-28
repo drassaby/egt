@@ -1,5 +1,7 @@
 package intersectionaldisadvantage
 
+import intersectionaldisadvantage.minimal.{MinimalIntersectionalitySimulation, PayoffMatrix}
+
 
 object Main {
   val RUNS = 1000

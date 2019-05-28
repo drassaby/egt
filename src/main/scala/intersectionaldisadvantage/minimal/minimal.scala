@@ -1,6 +1,8 @@
-import intersectionaldisadvantage.Main.PAYOFFS
+package intersectionaldisadvantage.minimal
 
-package object intersectionaldisadvantage {
+import intersectionaldisadvantage.{P, Q}
+
+package object minimal {
 
   // a population can be seen as a mapping from each intersectional identity to a strategy.
   // because proportions of P1, P2, Q1, Q2 are fixed
@@ -20,17 +22,5 @@ package object intersectionaldisadvantage {
          |  In: ${in.map("%.2f" format _).mkString(",")},
          |  Out: ${out.map("%.2f" format _).mkString(",")}]""".stripMargin
     }
-  }
-
-  sealed trait Arena {
-    def strategy(strategy: Strategy): ArenaStrategy
-  }
-
-  case object PArena extends Arena {
-    override def strategy(strategy: Strategy): ArenaStrategy = strategy.p
-  }
-
-  case object QArena extends Arena {
-    override def strategy(strategy: Strategy): ArenaStrategy = strategy.q
   }
 }

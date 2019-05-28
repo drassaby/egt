@@ -1,4 +1,7 @@
-package intersectionaldisadvantage
+package intersectionaldisadvantage.minimal
+
+import intersectionaldisadvantage._
+import intersectionaldisadvantage.minimal.minimal.{ArenaStrategy, Population, Strategy}
 
 import scala.collection.mutable
 
