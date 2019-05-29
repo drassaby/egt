@@ -6,6 +6,7 @@ import scala.collection.mutable
 
 
 object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
+  override def toString(): String = "Moderate"
 
   override def apply(payoffs: Map[(Arena, P), PayoffMatrix], runs: Int, maxGenerations: Int)
   : Vector[(Int, Int)] = {

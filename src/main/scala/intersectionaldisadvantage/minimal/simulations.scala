@@ -117,6 +117,8 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
 }
 
 object MinimalIntersectionalitySimulation extends AbstractTwoArenaSimulation {
+  override def toString(): String = "Minimal"
+
   def runArena(payoffMap: Map[(Arena, P), PayoffMatrix], population: Population)
               (salientIdentity: IdentityComponent,
                secondaryIdentity: IdentityComponent,
