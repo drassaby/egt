@@ -26,6 +26,9 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
     var pqConvergence = Vector[(Int, Int)]()
     // for each run
     for (run <- 0 to runs) {
+      if (run % 100 == 0) {
+        println(s"Ran ${run} out of ${runs} runs")
+      }
       var oldPop: Population = fillStrategies(strategies, Vector.fill(_)(1d / strategies.length))
       var newPop: Population = fillStrategies(strategies, Utils.randFill)
 
@@ -42,7 +45,7 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
           val strategyPayoffs: Vector[Double] =
             strategies.map(getPayoff(p, q, payoffs, _, newPop, strategies))
 
-          val fitnesses = strategyPayoffs.map(_ / (strategyPayoffs.sum))
+          val fitnesses = strategyPayoffs.map(_ / strategyPayoffs.sum)
 
 //          println(s"fitnesses.sum = ${fitnesses.sum}")
           assert(math.abs(fitnesses.sum - 1) < REPLICATION_EPSILON)
