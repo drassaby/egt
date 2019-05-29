@@ -26,11 +26,12 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
     var pqConvergence = Vector[(Int, Int)]()
     // for each run
     for (run <- 0 to runs) {
-      var oldPop: Population = fillStrategies(numStrategies, Vector.fill(_)(0d))
-      var newPop: Population = fillStrategies(numStrategies, Utils.randFill)
+      var oldPop: Population = fillStrategies(strategies, Vector.fill(_)(1d / strategies.length))
+      var newPop: Population = fillStrategies(strategies, Utils.randFill)
 
       // while the population isn't stable
-      while (!isStable(oldPop, newPop)) {
+      var generation = 0
+      while (!isStable(oldPop, newPop) && generation < maxGenerations) {
         var nextPop: Population = Map()
         // for each intersectional identity
         for ((p, q) <- newPop.keys) {
@@ -41,16 +42,29 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
           val strategyPayoffs: Vector[Double] =
             strategies.map(getPayoff(p, q, payoffs, _, newPop, strategies))
 
-          val fitnesses = strategyPayoffs.map(_ / strategyPayoffs.sum)
+          val fitnesses = strategyPayoffs.map(_ / (strategyPayoffs.sum))
 
-          val newProportions = Utils.elementwiseProduct(strategyProportions, fitnesses)
+//          println(s"fitnesses.sum = ${fitnesses.sum}")
+          assert(math.abs(fitnesses.sum - 1) < REPLICATION_EPSILON)
+
+          val newProportions = {
+            val props = Utils.elementwiseProduct(strategyProportions, fitnesses)
+            props.map(_ / props.sum)
+          }
+
+//          println(s"newProportions.sum = ${newProportions.sum}")
+          assert(math.abs(newProportions.sum - 1) < REPLICATION_EPSILON)
 
           // find new proportions of each strategy (replicator dynamics)
 
-          val newStrategyProportions = StrategyProportions(newProportions)
+          val newStrategyProportions = StrategyProportions(newProportions, strategies)
           // assign new proportions to be next population
           nextPop = nextPop + ((p, q) -> newStrategyProportions)
         }
+
+        oldPop = newPop
+        newPop = nextPop
+        generation += 1
       }
 
       // then record the strategy p1, q1 converges to in P and Q arena
@@ -62,8 +76,6 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
 
   /**
     *
-    * @param p
-    * @param q
     * @param payoffs  the payoff matrix for each arena for each P type
     * @param strategy the strategy to get the payoff for, when played by a (p, q) member
     * @param pop      the population: everyone else
@@ -72,27 +84,49 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
   def getPayoff(p: P, q: Q, payoffs: Map[(Arena, P), PayoffMatrix],
                 strategy: Strategy, pop: Population, strategies: Vector[Strategy]): Double = {
 
-
+    val nStrats = payoffs.toVector.head._2.length
+    
     // P Arena
     val pIn: Int = strategy.pIn
     val pOut: Int = strategy.pOut
-    val ourPStrategy = Vector.tabulate(strategies.length)(x => if (x == pIn) 1 else 0)
-    val theirPStrategy: Vector[Double] = pop.foldLeft(Vector(0d, 0d)) {
-      case (soFar, ((stratP, stratQ), stratProps)) =>
-        if (stratP == p) {
-          soFar
-        } else {
-          val theirStrat = strategyFrequency(stratProps, strategies)(1)
-          Utils.weightedElementwiseSum(
-            soFar, 1, theirStrat, stratQ.proportion)
-        }
-    }
 
-    val pArenaInGroupPayoff: Double = payoffs(PArena, p)
-      .twoPopulationStrategyPayoffs(ourPStrategy, p.proportion).sum
-    val pArenaOutGroupPayoff: Double = payoffs(PArena, p).twoPopulationStrategyPayoffs(
-      ourPStrategy, p.proportion,
-      theirPStrategy, p.opposite.proportion).sum
+    val pInGroupStrategies: Vector[Double] = Utils.weightedElementwiseSum(
+      pop(p, q).strategyVector.pIn, q.proportion,
+      pop(p, q.opposite).strategyVector.pIn, q.opposite.proportion)
+    assert(pInGroupStrategies.length == nStrats)
+
+    val pArenaInGroupPayoff: Double = 
+      payoffs(PArena, p).averagePayoff(pIn, pInGroupStrategies) * p.proportion
+
+    val pOutGroupStrategies: Vector[Double] = Utils.weightedElementwiseSum(
+      pop(p.opposite, q).strategyVector.pOut, q.proportion,
+      pop(p.opposite, q.opposite).strategyVector.pOut, q.opposite.proportion)
+    assert(pOutGroupStrategies.length == nStrats)
+    
+    val pArenaOutGroupPayoff: Double =
+      payoffs(PArena, p).averagePayoff(pOut, pOutGroupStrategies) * p.opposite.proportion
+      
+ 
+    // q Arena
+    val qIn: Int = strategy.qIn
+    val qOut: Int = strategy.qOut
+
+    val qInGroupStrategies: Vector[Double] = Utils.weightedElementwiseSum(
+      pop(p, q).strategyVector.qIn, p.proportion,
+      pop((p.opposite, q)).strategyVector.qIn, p.opposite.proportion)
+    assert(qInGroupStrategies.length == nStrats)
+
+    val qArenaInGroupPayoff: Double =
+      payoffs(QArena, p).averagePayoff(qIn, qInGroupStrategies) * q.proportion
+
+    val qOutGroupStrategies: Vector[Double] = Utils.weightedElementwiseSum(
+      pop(p, q.opposite).strategyVector.qOut, p.proportion,
+      pop(p.opposite, q.opposite).strategyVector.qOut, p.opposite.proportion)
+    assert(qOutGroupStrategies.length == nStrats)
+    
+    val qArenaOutGroupPayoff: Double =
+      payoffs(QArena, p).averagePayoff(qOut, qOutGroupStrategies) * q.opposite.proportion
+      
 
 
     pArenaInGroupPayoff + pArenaOutGroupPayoff + qArenaInGroupPayoff + qArenaOutGroupPayoff
@@ -134,10 +168,10 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
       qConvergence.toVector.maxBy(_._2)._1)
   }
 
-  private def fillStrategies(numStrategies: Int, thunk: Int => Vector[Double]): Map[(P, Q), StrategyProportions] = {
+  private def fillStrategies(strategies: Vector[Strategy], strategyGenerator: Int => Vector[Double])
+  : Map[(P, Q), StrategyProportions] = {
     Vector((P1, Q1), (P2, Q1), (P1, Q2), (P2, Q2))
-      .map(_ -> StrategyProportions(
-        thunk(numStrategies)))
+      .map(_ -> StrategyProportions(strategyGenerator(strategies.length), strategies))
       .toMap
   }
 

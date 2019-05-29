@@ -5,7 +5,7 @@ import intersectionaldisadvantage.moderate.ModerateIntersectionalitySimulation
 
 
 object Main {
-  val RUNS = 1000
+  val RUNS = 100
   val MAX_GENERATIONS = 2000
 
   val simulation = ModerateIntersectionalitySimulation

@@ -40,6 +40,16 @@ case class PayoffMatrix(payoffs: Vector[Vector[(Int, Int)]]) {
       strategyPayoff
     }).toVector
   }
+
+  def averagePayoff(strategy: Int, opponents: Vector[Double]): Double = {
+    assert (opponents.length == payoffs.length)
+
+    var payoff = 0d
+    for (i <- opponents.indices) {
+      payoff += payoffs(strategy)(i)._1 * opponents(i)
+    }
+    payoff
+  }
 }
 
 
