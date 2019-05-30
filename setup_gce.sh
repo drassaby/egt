@@ -16,11 +16,11 @@ sudo yum install -y sbt
 sbt package
 
 
-scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar .9 .5 0 4 5 6 > 456.out &
-scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar .9 .5 0 4 6 > 456.out &
+scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar .9 .5 0 4 5 6 > 456.out & disown
+scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar .9 .5 0 4 6 > 46.out & disown
 
 
-scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar .9 .9 0 1 5 9 > 159.out &
-scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar .9 .9 0 1 5 9 > 159.out &
-scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar .9 .9 0 4 5 6 > 456.out &
-scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar .9 .9 0 4 5 6 > 456.out &
+scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar .9 .9 0 1 5 9 > 159.out & disown
+scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar .9 .9 0 1 5 9 > 159.out & disown
+scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar .9 .9 0 4 5 6 > 456.out & disown
+scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar .9 .9 0 4 5 6 > 456.out & disown
