@@ -7,7 +7,7 @@ case class PayoffMatrix(payoffs: Vector[Vector[(Int, Int)]]) {
   def length: Int = payoffs.length
 
 
-  def strategyPayoffs(player1: Vector[Double], p1prop: Double): Vector[Double] = {
+  def strategyPayoffs(player1: IndexedSeq[Double], p1prop: Double): IndexedSeq[Double] = {
     twoPopulationStrategyPayoffs(player1, p1prop, player1, p1prop)
   }
 
@@ -19,9 +19,9 @@ case class PayoffMatrix(payoffs: Vector[Vector[(Int, Int)]]) {
     * @param p2prop what proportion of the population is made of player2
     * @return the average payoff for each strategy when played by player1 against player2
     */
-  def twoPopulationStrategyPayoffs(player1: Vector[Double], p1prop: Double,
-                                   player2: Vector[Double], p2prop: Double
-                                  ): Vector[Double] = {
+  def twoPopulationStrategyPayoffs(player1: IndexedSeq[Double], p1prop: Double,
+                                   player2: IndexedSeq[Double], p2prop: Double
+                                  ): IndexedSeq[Double] = {
 
     assert(math.abs(player1.sum - 1) < .001)
     assert(math.abs(player2.sum - 1) < .001)
@@ -41,7 +41,7 @@ case class PayoffMatrix(payoffs: Vector[Vector[(Int, Int)]]) {
     }).toVector
   }
 
-  def averagePayoff(strategy: Int, opponents: Vector[Double]): Double = {
+  def averagePayoff(strategy: Int, opponents: IndexedSeq[Double]): Double = {
     assert (opponents.length == payoffs.length)
 
     var payoff = 0d

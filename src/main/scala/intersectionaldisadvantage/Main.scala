@@ -4,17 +4,16 @@ import intersectionaldisadvantage.moderate.ModerateIntersectionalitySimulation
 
 
 object Main {
-  val RUNS = 500
+  val RUNS = 10 * 1000
   val MAX_GENERATIONS = 2000
 
   val simulation = ModerateIntersectionalitySimulation
 
 
-  //  val strategies = 2 to 8 toVector
-  val strategies = Vector(4, 6)
+  val strategies = Vector(4, 5, 6)
   val D = 0
-  val P1_PROPORTION = .7
-  val Q1_PROPORTION = .7
+  val P1_PROPORTION = .9
+  val Q1_PROPORTION = .5
 
 
   //  val PAYOFFS = PayoffMatrix(strategies.map(s1 =>

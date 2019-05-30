@@ -24,9 +24,8 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
     val numStrategies = strategies.length
 
 
-    var pqConvergence = Vector[(Int, Int)]()
     // for each run
-    for (run <- 0 to runs) {
+    var pqConvergence: Vector[(Int,Int)] = (0 to runs).toVector.par.map(run => {
       if (run % 100 == 0) {
         println(s"Ran ${run} out of ${runs} runs")
       }
@@ -43,7 +42,7 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
 
           val strategyProportions = newPop(p, q).proportions
 
-          val strategyPayoffs: Vector[Double] =
+          val strategyPayoffs: IndexedSeq[Double] =
             strategies.map(getPayoff(p, q, payoffs, _, newPop, strategies))
 
           val fitnesses = strategyPayoffs.map(_ / strategyPayoffs.sum)
@@ -72,10 +71,13 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
       }
 
       // then record the strategy p1, q1 converges to in P and Q arena
-      pqConvergence = pqConvergence :+ getConvergedStrategies(newPop, strategies)
-    }
+      val out = getConvergedStrategies(newPop, strategies)
+      println(out)
+      out
+    }).toVector
 
     pqConvergence
+
   }
 
   /**
@@ -86,7 +88,7 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
     * @return
     */
   def getPayoff(p: P, q: Q, payoffs: Map[(Arena, P), PayoffMatrix],
-                strategy: Strategy, pop: Population, strategies: Vector[Strategy]): Double = {
+                strategy: Strategy, pop: Population, strategies: IndexedSeq[Strategy]): Double = {
 
     val nStrats = payoffs.toVector.head._2.length
     
@@ -94,7 +96,7 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
     val pIn: Int = strategy.pIn
     val pOut: Int = strategy.pOut
 
-    val pInGroupStrategies: Vector[Double] = Utils.weightedElementwiseSum(
+    val pInGroupStrategies: IndexedSeq[Double] = Utils.weightedElementwiseSum(
       pop(p, q).strategyVector.pIn, q.proportion,
       pop(p, q.opposite).strategyVector.pIn, q.opposite.proportion)
     assert(pInGroupStrategies.length == nStrats)
@@ -102,7 +104,7 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
     val pArenaInGroupPayoff: Double = 
       payoffs(PArena, p).averagePayoff(pIn, pInGroupStrategies) * p.proportion
 
-    val pOutGroupStrategies: Vector[Double] = Utils.weightedElementwiseSum(
+    val pOutGroupStrategies: IndexedSeq[Double] = Utils.weightedElementwiseSum(
       pop(p.opposite, q).strategyVector.pOut, q.proportion,
       pop(p.opposite, q.opposite).strategyVector.pOut, q.opposite.proportion)
     assert(pOutGroupStrategies.length == nStrats)
@@ -115,7 +117,7 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
     val qIn: Int = strategy.qIn
     val qOut: Int = strategy.qOut
 
-    val qInGroupStrategies: Vector[Double] = Utils.weightedElementwiseSum(
+    val qInGroupStrategies: IndexedSeq[Double] = Utils.weightedElementwiseSum(
       pop(p, q).strategyVector.qIn, p.proportion,
       pop((p.opposite, q)).strategyVector.qIn, p.opposite.proportion)
     assert(qInGroupStrategies.length == nStrats)
@@ -123,7 +125,7 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
     val qArenaInGroupPayoff: Double =
       payoffs(QArena, p).averagePayoff(qIn, qInGroupStrategies) * q.proportion
 
-    val qOutGroupStrategies: Vector[Double] = Utils.weightedElementwiseSum(
+    val qOutGroupStrategies: IndexedSeq[Double] = Utils.weightedElementwiseSum(
       pop(p, q.opposite).strategyVector.qOut, p.proportion,
       pop(p.opposite, q.opposite).strategyVector.qOut, p.opposite.proportion)
     assert(qOutGroupStrategies.length == nStrats)
@@ -134,26 +136,6 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
 
 
     pArenaInGroupPayoff + pArenaOutGroupPayoff + qArenaInGroupPayoff + qArenaOutGroupPayoff
-  }
-
-  /**
-    *
-    * @param strategyProportions proportions that each strategy e.x. <1, 1, 0, 1> is played
-    * @return proportions of a strategy played in each arena, e.x. <<.4, .6>, <.1, .9>, …>
-    */
-  def strategyFrequency(strategyProportions: StrategyProportions, strategies: Vector[Strategy])
-  : Vector[Vector[Double]] = {
-    var frequencies = mutable.ArrayBuffer.fill(4)(mutable.ArrayBuffer.fill(strategies.length)(0d))
-
-    strategyProportions.proportions.zip(strategies).foreach {
-      case (prop, strat) =>
-        frequencies(0)(strat.pIn) += prop
-        frequencies(1)(strat.pOut) += prop
-        frequencies(2)(strat.qIn) += prop
-        frequencies(3)(strat.qOut) += prop
-    }
-
-    frequencies.map(_.toVector).toVector
   }
 
   def getConvergedStrategies(newPop: Population, strategies: Vector[Strategy]): (Int, Int) = {
@@ -172,7 +154,7 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
       qConvergence.toVector.maxBy(_._2)._1)
   }
 
-  private def fillStrategies(strategies: Vector[Strategy], strategyGenerator: Int => Vector[Double])
+  private def fillStrategies(strategies: IndexedSeq[Strategy], strategyGenerator: Int => IndexedSeq[Double])
   : Map[(P, Q), StrategyProportions] = {
     Vector((P1, Q1), (P2, Q1), (P1, Q2), (P2, Q2))
       .map(_ -> StrategyProportions(strategyGenerator(strategies.length), strategies))
@@ -181,7 +163,7 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
 
 
   private def isStable(oldPop: Population, newPop: Population): Boolean = {
-    def vectorStable(v1: Vector[Double], v2: Vector[Double]): Boolean = {
+    def vectorStable(v1: IndexedSeq[Double], v2: IndexedSeq[Double]): Boolean = {
       v1.corresponds(v2)((e1, e2) => math.abs(e1 - e2) < STABILITY_EPSILON)
     }
 

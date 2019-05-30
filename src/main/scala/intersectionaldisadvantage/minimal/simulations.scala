@@ -45,7 +45,7 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
     // Record the results from this run
     outcome.foreach {
       population => {
-        def maxIndex(vector: Vector[Double]) = {
+        def maxIndex(vector: IndexedSeq[Double]) = {
           vector.indexOf(vector.max)
         }
 
@@ -73,7 +73,7 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
 
 
   private def isStable(oldPop: Population, newPop: Population): Boolean = {
-    def vectorStable(v1: Vector[Double], v2: Vector[Double]): Boolean = {
+    def vectorStable(v1: IndexedSeq[Double], v2: IndexedSeq[Double]): Boolean = {
       v1.corresponds(v2)((e1, e2) => math.abs(e1 - e2) < STABILITY_EPSILON)
     }
 
@@ -128,18 +128,18 @@ object MinimalIntersectionalitySimulation extends AbstractTwoArenaSimulation {
 
     val getStrategy = makeStrategyRetriever(arena, population) _
 
-    val strategyIn: Vector[Double] = getStrategy(salientIdentity, secondaryIdentity).in
+    val strategyIn: IndexedSeq[Double] = getStrategy(salientIdentity, secondaryIdentity).in
 
     val inGroupStrategy = Utils.weightedElementwiseSum(
       strategyIn, secondaryIdentity.proportion,
       getStrategy(salientIdentity, secondaryIdentity.opposite).in,
       secondaryIdentity.opposite.proportion)
 
-    val inGroupPayoffs: Vector[Double] =
+    val inGroupPayoffs: IndexedSeq[Double] =
       payoffs.strategyPayoffs(inGroupStrategy, salientIdentity.proportion)
     assert(inGroupPayoffs.length == payoffs.length)
 
-    val strategyOut: Vector[Double] = getStrategy(salientIdentity, secondaryIdentity).out
+    val strategyOut: IndexedSeq[Double] = getStrategy(salientIdentity, secondaryIdentity).out
     // the strategy played by your salient identity against out-groups by that identity
     // is the weighted elementwise sum of two vectors of the groups in your in-group
     val outGroupStrategy = Utils.weightedElementwiseSum(
@@ -165,18 +165,18 @@ object MinimalIntersectionalitySimulation extends AbstractTwoArenaSimulation {
       * Indexed by (in group strategy)(out group strategy) leads to the fitness for playing
       * that in and out group strategy.
       */
-    val jointFitness: Vector[Vector[Double]] = inGroupPayoffs.map(igp =>
+    val jointFitness: IndexedSeq[IndexedSeq[Double]] = inGroupPayoffs.map(igp =>
       outGroupPayoffs.map(igp * salientIdentity.proportion +
         _ * salientIdentity.opposite.proportion))
 
     // compute the new proportions of each strategy
-    val newInGroupStrategy: Vector[Double] = inGroupStrategy
+    val newInGroupStrategy: IndexedSeq[Double] = inGroupStrategy
       .zip(jointFitness.map(_.sum)).map {
       case (proportion, payoff) =>
         proportion * (payoff / Utils.dotProduct(inGroupStrategy, jointFitness.map(_.sum)))
     }
 
-    val newOutGroupStrategy: Vector[Double] = outGroupStrategy
+    val newOutGroupStrategy: IndexedSeq[Double] = outGroupStrategy
       .zip(jointFitness.transpose.map(_.sum)).map {
       case (proportion, payoff) =>
         proportion * (payoff / Utils.dotProduct(

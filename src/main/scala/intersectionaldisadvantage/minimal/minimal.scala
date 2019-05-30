@@ -11,7 +11,7 @@ package object minimal {
   /** The proportion of games where each strategy is played against in and out groups. */
   case class Strategy(p: ArenaStrategy, q: ArenaStrategy)
 
-  case class ArenaStrategy(in: Vector[Double], out: Vector[Double]) {
+  case class ArenaStrategy(in: IndexedSeq[Double], out: IndexedSeq[Double]) {
     // every strategy has to be represented in the in- and out- group strategy ratio vectors
 //    assert(in.length == PAYOFFS.length)
 //    assert(out.length == PAYOFFS.length)
