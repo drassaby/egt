@@ -4,53 +4,56 @@ import intersectionaldisadvantage.moderate.ModerateIntersectionalitySimulation
 
 
 object Main {
-  val RUNS = 10 * 1000
-  val MAX_GENERATIONS = 2000
 
-  val simulation = ModerateIntersectionalitySimulation
-
-
-  val strategies = Vector(4, 5, 6)
-  val D = 0
-  val P1_PROPORTION = .9
-  val Q1_PROPORTION = .5
-
-
-  //  val PAYOFFS = PayoffMatrix(strategies.map(s1 =>
-  //    strategies.map(s2 => if (s1 + s2 <= 10) {
-  //      (s1, s2)
-  //    } else {
-  //      (0, 0)
-  //    })))
-  val PAYOFFS: Map[(Arena, P), PayoffMatrix] = Map(
-    (PArena, P1) -> PayoffMatrix(strategies.map(s1 =>
-      strategies.map(s2 => if (s1 + s2 <= 10) {
-        (s1, s2)
-      } else {
-        (D, 0)
-      }))),
-    (PArena, P2) -> PayoffMatrix(strategies.map(s1 =>
-      strategies.map(s2 => if (s1 + s2 <= 10) {
-        (s1, s2)
-      } else {
-        (0, D)
-      }))),
-    (QArena, P1) -> PayoffMatrix(strategies.map(s1 =>
-      strategies.map(s2 => if (s1 + s2 <= 10) {
-        (s1, s2)
-      } else {
-        (0, 0)
-      }))),
-    (QArena, P2) -> PayoffMatrix(strategies.map(s1 =>
-      strategies.map(s2 => if (s1 + s2 <= 10) {
-        (s1, s2)
-      } else {
-        (0, 0)
-      }))),
-  )
-
+  var P1_PROPORTION: Double = _
+  var Q1_PROPORTION: Double = _
+  var D: Double = _
+  var strategies: Vector[Double] = _
 
   def main(args: Array[String]): Unit = {
+    val RUNS = 10 * 1000
+    val MAX_GENERATIONS = 2000
+
+    val simulation = ModerateIntersectionalitySimulation
+
+    val P1_PROPORTION = args(0).toDouble
+    val Q1_PROPORTION = args(1).toDouble
+    val D: Double = args(2).toDouble
+    val strategies: Vector[Double] = args.drop(3).map(_.toDouble).toVector
+
+    this.strategies = strategies
+    this.P1_PROPORTION = P1_PROPORTION
+    this.Q1_PROPORTION = Q1_PROPORTION
+    this.D = D
+
+
+    val PAYOFFS: Map[(Arena, P), PayoffMatrix] = Map(
+      (PArena, P1) -> PayoffMatrix(strategies.map(s1 =>
+        strategies.map(s2 => if (s1 + s2 <= 10) {
+          (s1, s2)
+        } else {
+          (D, 0d)
+        }))),
+      (PArena, P2) -> PayoffMatrix(strategies.map(s1 =>
+        strategies.map(s2 => if (s1 + s2 <= 10) {
+          (s1, s2)
+        } else {
+          (0d, D)
+        }))),
+      (QArena, P1) -> PayoffMatrix(strategies.map(s1 =>
+        strategies.map(s2 => if (s1 + s2 <= 10) {
+          (s1, s2)
+        } else {
+          (0d, 0d)
+        }))),
+      (QArena, P2) -> PayoffMatrix(strategies.map(s1 =>
+        strategies.map(s2 => if (s1 + s2 <= 10) {
+          (s1, s2)
+        } else {
+          (0d, 0d)
+        }))),
+    )
+
     println(
       f"P1=$P1_PROPORTION, Q1=$Q1_PROPORTION, D=$D, " +
         f"strategies=$strategies, simulation=$simulation")

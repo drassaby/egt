@@ -1,6 +1,6 @@
 package intersectionaldisadvantage
 
-case class PayoffMatrix(payoffs: Vector[Vector[(Int, Int)]]) {
+case class PayoffMatrix(payoffs: Vector[Vector[(Double, Double)]]) {
   // payoffs must be square and nonempty
   assert(payoffs.length == payoffs.head.length)
 
