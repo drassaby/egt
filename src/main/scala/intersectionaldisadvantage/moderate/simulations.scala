@@ -25,7 +25,7 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
 
 
     // for each run
-    var pqConvergence: Vector[(Int,Int)] = (0 to runs).toVector.par.map(run => {
+    var pqConvergence: Vector[(Int,Int)] = (1 to runs).toVector.par.map(run => {
       if (run % 100 == 0) {
         println(s"Ran ${run} out of ${runs} runs")
       }
