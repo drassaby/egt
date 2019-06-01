@@ -6,4 +6,5 @@
 #SBATCH --mem=8Gb
 #SBATCH --partition=general
 
-java -jar ~/egt.jar 1000 .9 .9 0 1 5 9
+module load oracle_java/jdk1.8.0_181
+java -jar ~/egt.jar 10000 .5 .9 1 1 5 9

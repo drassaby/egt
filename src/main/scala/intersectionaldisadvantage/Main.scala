@@ -26,40 +26,29 @@ object Main {
     this.D = D
 
 
-    val PAYOFFS: Map[(Arena, P), PayoffMatrix] = Map(
-      (PArena, P1) -> PayoffMatrix(strategies.map(s1 =>
-        strategies.map(s2 => if (s1 + s2 <= 10) {
-          (s1, s2)
-        } else {
-          (D, 0d)
-        }))),
-      (PArena, P2) -> PayoffMatrix(strategies.map(s1 =>
-        strategies.map(s2 => if (s1 + s2 <= 10) {
-          (s1, s2)
-        } else {
-          (0d, D)
-        }))),
-      (QArena, P1) -> PayoffMatrix(strategies.map(s1 =>
-        strategies.map(s2 => if (s1 + s2 <= 10) {
-          (s1, s2)
-        } else {
-          (0d, 0d)
-        }))),
-      (QArena, P2) -> PayoffMatrix(strategies.map(s1 =>
-        strategies.map(s2 => if (s1 + s2 <= 10) {
-          (s1, s2)
-        } else {
-          (0d, 0d)
-        }))),
-    )
+    val PAYOFFS: Map[(Arena, P), PayoffMatrix] = {
+      /** Creates a payoff matrix, using the provided default if the demands are incompatible */
+      def payoffs(disagreementPoint: (Double, Double)): PayoffMatrix = {
+        PayoffMatrix(strategies.map(s1 =>
+          strategies.map(s2 => if (s1 + s2 <= 10) {
+            (s1, s2)
+          } else {
+            disagreementPoint
+          })))
+      }
+
+      Map(
+        (PArena, P1) -> payoffs(this.D, 0d),
+        (PArena, P2) -> payoffs(0d, this.D),
+        (QArena, P1) -> payoffs(0d, 0d),
+        (QArena, P2) -> payoffs(0d, 0d),
+      )
+    }
 
     println(
       f"P1=$P1_PROPORTION, Q1=$Q1_PROPORTION, D=$D, " +
         f"strategies=$strategies, simulation=$simulation")
-    val pqHighFrequencies = simulation(
-      PAYOFFS,
-      runs = RUNS,
-      maxGenerations = MAX_GENERATIONS)
+    val pqHighFrequencies = simulation(PAYOFFS, RUNS, MAX_GENERATIONS)
 
     val indexMap = pqHighFrequencies.groupBy(x => x)
       .mapValues(_.length.toDouble / pqHighFrequencies.length)

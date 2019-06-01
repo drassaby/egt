@@ -21,8 +21,8 @@ scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar 10000 .9 .9 0 4 6 > 46.out & diso
 scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar 10000 .9 .9 0 1 5 9 > 159.out & disown
 
 # Waiting on power to be implemented:
-scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar 10000 .6 .5 3 1 5 9 > 159.out & disown
-scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar 10000 .9 .5 1 1 5 9 > 159.out & disown
+scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar 10000 .5 .6 3 1 5 9 > 159.out & disown
+scala ~/egt/target/scala-2.12/egt_2.12-0.1.jar 10000 .5 .9 1 1 5 9 > 159.out & disown
 
 
 # This one will take a long long long time, maybe parallelize further?

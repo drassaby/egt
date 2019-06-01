@@ -134,7 +134,6 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
       payoffs(QArena, p).averagePayoff(qOut, qOutGroupStrategies) * q.opposite.proportion
       
 
-
     pArenaInGroupPayoff + pArenaOutGroupPayoff + qArenaInGroupPayoff + qArenaOutGroupPayoff
   }
 
