@@ -11,15 +11,14 @@ object Main {
   var strategies: Vector[Double] = _
 
   def main(args: Array[String]): Unit = {
-    val RUNS = 10 * 1000
     val MAX_GENERATIONS = 2000
-
     val simulation = ModerateIntersectionalitySimulation
 
-    val P1_PROPORTION = args(0).toDouble
-    val Q1_PROPORTION = args(1).toDouble
-    val D: Double = args(2).toDouble
-    val strategies: Vector[Double] = args.drop(3).map(_.toDouble).toVector
+    val RUNS: Int = args(0).toInt
+    val P1_PROPORTION: Double = args(1).toDouble
+    val Q1_PROPORTION: Double = args(2).toDouble
+    val D: Double = args(3).toDouble
+    val strategies: Vector[Double] = args.drop(4).map(_.toDouble).toVector
 
     this.strategies = strategies
     this.P1_PROPORTION = P1_PROPORTION
