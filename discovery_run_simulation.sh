@@ -7,4 +7,6 @@
 #SBATCH --partition=general
 
 module load oracle_java/jdk1.8.0_181
+
+# Args: Runs, P1, Q1, D, <strategies>
 java -jar ~/egt.jar 10000 .5 .9 1 1 5 9

@@ -102,7 +102,7 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
     assert(pInGroupStrategies.length == nStrats)
 
     val pArenaInGroupPayoff: Double = 
-      payoffs(PArena, p).averagePayoff(pIn, pInGroupStrategies) * p.proportion
+      payoffs(PArena, p).averagePayoff(pIn, pInGroupStrategies) * p.proportion * q.proportion
 
     val pOutGroupStrategies: IndexedSeq[Double] = Utils.weightedElementwiseSum(
       pop(p.opposite, q).strategyVector.pOut, q.proportion,

@@ -44,13 +44,9 @@ case class PayoffMatrix(payoffs: Vector[Vector[(Double, Double)]]) {
   def averagePayoff(strategy: Int, opponents: IndexedSeq[Double]): Double = {
     assert (opponents.length == payoffs.length)
 
-    println(strategy, opponents, payoffs)
-
-    val out = opponents.indices.map(opponentStrategy =>
+    opponents.indices.map(opponentStrategy =>
       payoffs(strategy)(opponentStrategy)._1 * opponents(opponentStrategy)
     ).sum
-    println(out)
-    out
   }
 }
 
