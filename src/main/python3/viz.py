@@ -1,15 +1,32 @@
+#!/usr/bin/env python3
+
 import csv
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 
-csv_filename = "./1&9.csv"
+output_filename = sys.argv[1]
 title = "Proportion of (P1, Q1) playing strategies in P and Q arenas"
 # labels = [str(x) for x in range(1,10)]
-labels = [1, 9]
+labels = sys.argv[2:]
 
-with open(csv_filename) as csv_fd:
-    matrix = np.array([np.array([float(x) for x in row])
-                       for row in csv.reader(csv_fd, delimiter=' ')])
+with open(output_filename) as csv_fd:
+
+    matrix_lines = [[float(proportion) for proportion in line[:-1].split(" ")]
+                    for line in csv_fd
+                    if line.startswith("0")  or line.startswith("1")]
+
+    matrix_size = len(matrix_lines[0])
+    matrices = [matrix_lines[k:k+matrix_size] for k in range(0, len(matrix_lines), matrix_size)]
+
+    matrix = np.array(matrices[0])
+
+    for matrix_to_add in matrices[1:]:
+        matrix = np.add(matrix, np.array(matrix_to_add))
+
+    matrix /= len(matrices)
+
+    print(matrix)
 
 
 fig, ax = plt.subplots()
