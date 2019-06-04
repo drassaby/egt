@@ -46,7 +46,7 @@ heatmap = plt.imshow(matrix, cmap='Blues', interpolation='nearest')
 for i in range(len(labels)):
     for j in range(len(labels)):
         val = matrix[i, j]
-        if val < np.mean(matrix):
+        if val <= np.max(matrix) / 2:
             color = "k"
         else:
             color="w"
