@@ -49,7 +49,6 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
           vector.indexOf(vector.max)
         }
 
-        println(population.take(100))
         val pMax = maxIndex(population(P1, Q1).p.out)
 
         val qMax = maxIndex(population(P1, Q1).q.out)

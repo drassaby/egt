@@ -1,5 +1,6 @@
 package intersectionaldisadvantage
 
+import intersectionaldisadvantage.minimal.MinimalIntersectionalitySimulation
 import intersectionaldisadvantage.moderate.ModerateIntersectionalitySimulation
 
 
@@ -12,13 +13,16 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val MAX_GENERATIONS = 2000
-    val simulation = ModerateIntersectionalitySimulation
-
-    val RUNS: Int = args(0).toInt
-    val P1_PROPORTION: Double = args(1).toDouble
-    val Q1_PROPORTION: Double = args(2).toDouble
-    val D: Double = args(3).toDouble
-    val strategies: Vector[Double] = args.drop(4).map(_.toDouble).toVector
+    val simulation = if (args(0) == "minimal") {
+      MinimalIntersectionalitySimulation
+    } else {
+      ModerateIntersectionalitySimulation
+    }
+    val RUNS: Int = args(1).toInt
+    val P1_PROPORTION: Double = args(2).toDouble
+    val Q1_PROPORTION: Double = args(3).toDouble
+    val D: Double = args(4).toDouble
+    val strategies: Vector[Double] = args.drop(5).map(_.toDouble).toVector
 
     this.strategies = strategies
     this.P1_PROPORTION = P1_PROPORTION
