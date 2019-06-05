@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=EGTSimulations
-#SBATCH --nodes=100
+#SBATCH --nodes=10
 #SBATCH --tasks-per-node=10
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=8Gb
