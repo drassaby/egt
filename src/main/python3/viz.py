@@ -96,8 +96,7 @@ class EGTResult:
         :param at: Where to write the png file to
         """
         labels = [str(strategy) for strategy in self.strategies]
-        title = "Proportion of (P1, Q1) playing strategies in P and Q arenas with " \
-            f"P1={self.p1}, Q1={self.q1}, D={self.d}"
+        title = f"P1,Q1 Strategy Convergence in P and Q Arenas with {self.simulation} Intersectionality\nP1={self.p1}, Q1={self.q1}, D={self.d}"
 
         fig, ax = plt.subplots()
         ax.imshow(self.result_matrix)
@@ -125,10 +124,11 @@ class EGTResult:
                 ax.text(j, i, label, ha="center", va="center", color=color)
 
         plt.title(title)
+        # plt.suptitle(subtitle)
         plt.colorbar(heatmap)
         # plt.show()
         # The name of the figure is the name of the parsed data file, and can be found at location at.
-        plt.savefig(f"{at}/{self.input_file.split('/')[-1].split('.')[0]}.png")
+        plt.savefig(f"{at}/{self.input_file.split('/')[-1].split('.')[0]}.png", bbox_inches='tight')
 
 
 if __name__ == '__main__':
