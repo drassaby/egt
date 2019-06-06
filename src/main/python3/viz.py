@@ -109,8 +109,6 @@ class EGTResult:
         ax.set_xticklabels(np.array(labels))
         ax.set_yticklabels(np.array(labels))
 
-        ax.xaxis.tick_top()
-
         heatmap = plt.imshow(self.result_matrix, cmap='Blues', interpolation='nearest')
 
         # Loop over data dimensions and create text annotations.
