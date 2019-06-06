@@ -24,7 +24,7 @@ def main(args: argparse.Namespace):
     elif os.path.isfile(input_location):
         input_files = [input_location]
     else:
-        raise FileNotFoundError(f"{input_location} is not a valid output directory,"
+        raise FileNotFoundError(f"{input_location} is not a valid input file/directory,"
                                 " see usage with:\n    ./viz.py --help")
 
     print("Creating heatmap for:")
@@ -96,8 +96,9 @@ class EGTResult:
         :param at: Where to write the png file to
         """
         labels = [str(strategy) for strategy in self.strategies]
-        title = "Proportion of (P1, Q1) playing strategies in P and Q arenas with " \
-            f"P1={self.p1}, Q1={self.q1}, D={self.d}"
+        title = f"P1,Q1 Strategy Convergence in P and Q Arenas with {self.simulation} Intersectionality\nP1={self.p1}, Q1={self.q1}, D={self.d}"
+        x_label = "Q Arena Strategy"
+        y_label = "P Arena Strategy"
 
         fig, ax = plt.subplots()
         ax.imshow(self.result_matrix)
@@ -107,8 +108,6 @@ class EGTResult:
 
         ax.set_xticklabels(np.array(labels))
         ax.set_yticklabels(np.array(labels))
-
-        ax.xaxis.tick_top()
 
         heatmap = plt.imshow(self.result_matrix, cmap='Blues', interpolation='nearest')
 
@@ -124,11 +123,13 @@ class EGTResult:
                 label = "%.4f" % val
                 ax.text(j, i, label, ha="center", va="center", color=color)
 
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
         plt.title(title)
         plt.colorbar(heatmap)
         # plt.show()
         # The name of the figure is the name of the parsed data file, and can be found at location at.
-        plt.savefig(f"{at}/{self.input_file.split('/')[-1].split('.')[0]}.png")
+        plt.savefig(f"{at}/{self.input_file.split('/')[-1].split('.')[0]}.png", bbox_inches='tight')
 
 
 if __name__ == '__main__':
