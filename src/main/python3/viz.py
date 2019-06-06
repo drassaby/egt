@@ -97,6 +97,8 @@ class EGTResult:
         """
         labels = [str(strategy) for strategy in self.strategies]
         title = f"P1,Q1 Strategy Convergence in P and Q Arenas with {self.simulation} Intersectionality\nP1={self.p1}, Q1={self.q1}, D={self.d}"
+        x_label = "Q Arena Strategy"
+        y_label = "P Arena Strategy"
 
         fig, ax = plt.subplots()
         ax.imshow(self.result_matrix)
@@ -123,8 +125,9 @@ class EGTResult:
                 label = "%.4f" % val
                 ax.text(j, i, label, ha="center", va="center", color=color)
 
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
         plt.title(title)
-        # plt.suptitle(subtitle)
         plt.colorbar(heatmap)
         # plt.show()
         # The name of the figure is the name of the parsed data file, and can be found at location at.
