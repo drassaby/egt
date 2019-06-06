@@ -24,7 +24,7 @@ def main(args: argparse.Namespace):
     elif os.path.isfile(input_location):
         input_files = [input_location]
     else:
-        raise FileNotFoundError(f"{input_location} is not a valid output directory,"
+        raise FileNotFoundError(f"{input_location} is not a valid input file/directory,"
                                 " see usage with:\n    ./viz.py --help")
 
     print("Creating heatmap for:")
