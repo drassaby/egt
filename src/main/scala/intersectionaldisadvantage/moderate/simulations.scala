@@ -69,9 +69,7 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
       }
 
       // then record the strategy p1, q1 converges to in P and Q arena
-      val out = getConvergedStrategies(newPop, strategies)
-      println(out)
-      out
+      getConvergedStrategies(newPop, strategies)
     }).toVector
 
     pqConvergence

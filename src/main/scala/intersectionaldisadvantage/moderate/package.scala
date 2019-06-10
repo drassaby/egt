@@ -26,7 +26,7 @@ package object moderate {
       *
       * @return
       */
-    def strategyVector: StrategyVector = {
+    val strategyVector: StrategyVector = {
       val out = Array.fill(4)(Array.fill(Main.strategies.length)(0d))
 
       for (i <- proportions.indices) {
