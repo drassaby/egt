@@ -115,7 +115,7 @@ class EGTResult:
         for i in range(len(labels)):
             for j in range(len(labels)):
                 val = self.result_matrix[i, j]
-                if val <= np.max(self.result_matrix) / 2:
+                if val <= (np.max(self.result_matrix) + np.min(self.result_matrix)) / 2:
                     color = "k"
                 else:
                     color = "w"
