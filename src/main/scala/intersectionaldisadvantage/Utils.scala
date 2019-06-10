@@ -1,6 +1,8 @@
 package intersectionaldisadvantage
 
 object Utils {
+  val RANDOM = new scala.util.Random(new java.security.SecureRandom())
+
   def weightedElementwiseSum(v1: IndexedSeq[Double], p1: Double, v2: IndexedSeq[Double], p2: Double): IndexedSeq[Double] = {
     v1.map(_ * p1).zip(v2.map(_ * p2)).map { case (e1, e2) => e1 + e2 }
   }
@@ -23,7 +25,7 @@ object Utils {
     // The negative logarithm is needed to ensure an unbiased distribution
     // Seems a bit strange if you don't know about random-point-picking
     // in Simplexes, but trust me...
-    val y = Vector.fill(n)(-math.log(util.Random.nextDouble()))
+    val y = Vector.fill(n)(-math.log(RANDOM.nextDouble()))
     y.map(_ / y.sum)
   }
 }
