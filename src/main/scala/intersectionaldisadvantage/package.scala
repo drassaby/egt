@@ -5,6 +5,5 @@ package object intersectionaldisadvantage {
 
   // how close does each corresponding element in two populations have to be for it to be stable
   val STABILITY_EPSILON = 0.0001
-
-
+  
 }

@@ -16,7 +16,6 @@ object Utils {
   }
 
 
-
   /**
     * @param n the length of the IndexedSeq
     * @return a IndexedSeq with samples from a uniform distribution that sum to one.

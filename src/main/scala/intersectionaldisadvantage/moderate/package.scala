@@ -41,4 +41,5 @@ package object moderate {
       StrategyVector(out(0), out(1), out(2), out(3))
     }
   }
+
 }

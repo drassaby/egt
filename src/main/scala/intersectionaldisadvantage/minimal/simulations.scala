@@ -69,8 +69,6 @@ abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
   }
 
 
-
-
   private def isStable(oldPop: Population, newPop: Population): Boolean = {
     def vectorStable(v1: IndexedSeq[Double], v2: IndexedSeq[Double]): Boolean = {
       v1.corresponds(v2)((e1, e2) => math.abs(e1 - e2) < STABILITY_EPSILON)

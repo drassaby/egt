@@ -13,8 +13,8 @@ package object minimal {
 
   case class ArenaStrategy(in: IndexedSeq[Double], out: IndexedSeq[Double]) {
     // every strategy has to be represented in the in- and out- group strategy ratio vectors
-//    assert(in.length == PAYOFFS.length)
-//    assert(out.length == PAYOFFS.length)
+    //    assert(in.length == PAYOFFS.length)
+    //    assert(out.length == PAYOFFS.length)
 
     override def toString(): String = {
       f"""
@@ -23,4 +23,5 @@ package object minimal {
          |  Out: ${out.map("%.2f" format _).mkString(",")}]""".stripMargin
     }
   }
+
 }
