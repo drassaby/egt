@@ -11,8 +11,23 @@ object Main {
   var D: Double = _
   var strategies: Vector[Double] = _
 
+  /**
+    * Runs the specified simulation. Called with
+    * 1) either "minimal" or "moderate"
+    * 2) the number of runs
+    * 3) P1
+    * 4) Q1
+    * 5) D
+    * and then the strategy set.
+    *
+    * For example:
+    *
+    * `$ java -jar EGT.jar "minimal" 1000 .6 .6 0 4 6`
+    * Runs minimal intersectionality 1000 times, with p1=q1=.6, D=0, and the possible
+    * strategies are 4 and 6.
+    */
   def main(args: Array[String]): Unit = {
-    val MAX_GENERATIONS = 2000
+    val MAX_GENERATIONS = 200
     val simulation = if (args(0) == "minimal") {
       MinimalIntersectionalitySimulation
     } else {
@@ -49,23 +64,25 @@ object Main {
       )
     }
 
-    println(
-      f"P1=$P1_PROPORTION, Q1=$Q1_PROPORTION, D=$D, " +
-        f"strategies=$strategies, simulation=$simulation")
-    val pqHighFrequencies = simulation(PAYOFFS, RUNS, MAX_GENERATIONS)
+    println(f"P1=$P1_PROPORTION, Q1=$Q1_PROPORTION, D=$D, " +
+      f"strategies=$strategies, simulation=$simulation")
 
-    val indexMap = pqHighFrequencies.groupBy(x => x)
-      .mapValues(_.length.toDouble / pqHighFrequencies.length)
+    // There is no particular reason these are specified here instead of as command line arguments,
+    // and if you want to run only one, replace it with "majorityHighProportion=0"
+    for (majorityHighProportion <- Vector(0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4.0, 4.5, 5.0)) {
+      println(s"Starting run with majorityHighProportion=${majorityHighProportion}")
+      val pqHighFrequencies = simulation(PAYOFFS, RUNS, MAX_GENERATIONS, majorityHighProportion)
 
-    val proportionsOfP1Q1Strategies =
-      indexMap.foldLeft(Vector.fill(strategies.length)(Vector.fill(strategies.length)(0d))) {
-        case (soFar, ((s1, s2), prop)) => soFar.updated(s1, soFar(s1).updated(s2, prop))
-      }
+      val indexMap = pqHighFrequencies.groupBy(x => x)
+        .mapValues(_.length.toDouble / pqHighFrequencies.length)
 
-    println(proportionsOfP1Q1Strategies.map(_.map("%.5f" format _).mkString(" ")).mkString("\n"))
+      val proportionsOfP1Q1Strategies =
+        indexMap.foldLeft(Vector.fill(strategies.length)(Vector.fill(strategies.length)(0d))) {
+          case (soFar, ((s1, s2), prop)) => soFar.updated(s1, soFar(s1).updated(s2, prop))
+        }
 
-
+      println(proportionsOfP1Q1Strategies.map(_.map("%.5f" format _).mkString(" ")).mkString("\n"))
+    }
   }
-
 }
 

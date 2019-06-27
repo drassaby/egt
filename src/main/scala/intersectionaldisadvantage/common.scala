@@ -51,7 +51,7 @@ case class PayoffMatrix(payoffs: Vector[Vector[(Double, Double)]]) {
 }
 
 
-trait TwoArenaSimulation extends ((Map[(Arena, P), PayoffMatrix], Int, Int) => Vector[(Int, Int)]) {
-  override def apply(payoffs: Map[(Arena, P), PayoffMatrix], runs: Int, maxGenerations: Int)
-  : Vector[(Int, Int)]
+trait TwoArenaSimulation {
+  def apply(payoffs: Map[(Arena, P), PayoffMatrix], runs: Int, maxGenerations: Int,
+            majorityHighProportion: Double) : Vector[(Int, Int)]
 }

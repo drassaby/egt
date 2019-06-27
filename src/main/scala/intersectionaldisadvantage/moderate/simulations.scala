@@ -6,7 +6,10 @@ import intersectionaldisadvantage._
 object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
   override def toString(): String = "Moderate"
 
-  override def apply(payoffs: Map[(Arena, P), PayoffMatrix], runs: Int, maxGenerations: Int)
+  override def apply(payoffs: Map[(Arena, P), PayoffMatrix],
+                     runs: Int,
+                     maxGenerations: Int,
+                     majorityHighProportion: Double = 0)
   : Vector[(Int, Int)] = {
 
     val numBargianingNorms = payoffs.toVector.head._2.length
@@ -15,9 +18,8 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
         numBargianingNorms,
         numBargianingNorms,
         numBargianingNorms,
-        numBargianingNorms)(
-        (pin, pout, qin, qout) => Strategy(pin, pout, qin, qout)
-      ).flatten.flatten.flatten
+        numBargianingNorms)(Strategy)
+        .flatten.flatten.flatten
 
     val numStrategies = strategies.length
 
@@ -28,7 +30,8 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
         println(s"Ran ${run} out of ${runs} runs")
       }
       var oldPop: Population = fillStrategies(strategies, Vector.fill(_)(1d / strategies.length))
-      var newPop: Population = fillStrategies(strategies, Utils.randFill)
+      var newPop: Population = fillStrategies(strategies, Utils.randFill,
+        majorityHighProportion = majorityHighProportion)
 
       // while the population isn't stable
       var generation = 0
@@ -142,11 +145,27 @@ object ModerateIntersectionalitySimulation extends TwoArenaSimulation {
       qConvergence.toVector.maxBy(_._2)._1)
   }
 
-  private def fillStrategies(strategies: IndexedSeq[Strategy], strategyGenerator: Int => IndexedSeq[Double])
+  private def fillStrategies(strategies: IndexedSeq[Strategy],
+                             strategyGenerator: Int => IndexedSeq[Double],
+                             majorityHighProportion: Double = 0)
   : Map[(P, Q), StrategyProportions] = {
-    Vector((P1, Q1), (P2, Q1), (P1, Q2), (P2, Q2))
-      .map(_ -> StrategyProportions(strategyGenerator(strategies.length), strategies))
-      .toMap
+    if (majorityHighProportion == null) {
+      Vector((P1, Q1), (P2, Q1), (P1, Q2), (P2, Q2))
+        .map(_ -> StrategyProportions(strategyGenerator(strategies.length), strategies))
+        .toMap
+    } else {
+      val proportions = {
+        val p = strategies.map(
+          // weight the "high" strategies higher if majorityHigh Proportion > 0
+          s => -math.log(util.Random.nextDouble() * (1 + majorityHighProportion * (s.pOut + s.qOut))))
+        p.map(_ / p.sum)
+      }
+
+      (((P1, Q1) -> StrategyProportions(proportions, strategies)) +:
+        Vector((P2, Q1), (P1, Q2), (P2, Q2))
+          .map(_ -> StrategyProportions(strategyGenerator(strategies.length), strategies)))
+        .toMap
+    }
   }
 
 

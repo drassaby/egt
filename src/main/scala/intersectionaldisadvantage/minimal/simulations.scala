@@ -8,7 +8,8 @@ import scala.collection.mutable
 
 abstract class AbstractTwoArenaSimulation extends TwoArenaSimulation {
 
-  override def apply(payoffs: Map[(Arena, P), PayoffMatrix], runs: Int, maxGenerations: Int)
+  def apply(payoffs: Map[(Arena, P), PayoffMatrix], runs: Int, maxGenerations: Int,
+            customMajorityStrategy: Double=0)
   : Vector[(Int, Int)] = {
     val strategiesAtTermination = mutable.ArrayBuffer[Population]()
 
