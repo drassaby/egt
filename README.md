@@ -7,7 +7,7 @@ You can find our paper [here](https://social-epistemology.com/2019/07/01/bargain
 Funding for this work was supported by the Rossetti Family Program for the Advancement of Humanities. We would also like to thank Cailin O’Connor for some helpful feedback in replicating her earlier models.
 
 Paper Contributors:
-Julian Zucker
-Daniel Rassaby
-Aja Watkins
+Julian Zucker,
+Daniel Rassaby,
+Aja Watkins,
 Rory Smead
